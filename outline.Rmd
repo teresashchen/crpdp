@@ -22,13 +22,15 @@ The main purpose of the project is to calculate two outcome variables indicating
 
 ## The chosen format(s)
 
-Dashboard
+Dashboard - codes will be written to build toward a cumulative and substantive product 
 
 ## Whether the purpose will primarily be instructive (tutorial-style) or substantive 
 
 Substantive
 
 ## Description of the data source (must be publicly available)
+
+This set of feasibility data is from the Motion Analysis Lab at UO. They are available for public, currently housed on Github.
 
 ### Description of data
 
@@ -49,7 +51,7 @@ head(df)
 ### Tentative steps 
 
 1. Tidy data  
-(how so?)=============================  
+Currently, each participant has their own long and wide data file. It is not the most optimal state to start with data analysis at this stage. Therefore, the process of data tidying will be completed first so that the dataset is structured, easy to manipulate.
 
 2. Calculate CRP of hip-knee
   + Built phase portrait: plotting the normalized angular positions $\Theta$ (x-axis) and normalized angular velocities $\omega_{i}$ (y-axis). Angular positions and velocities were normalized using the following equations, where $\Theta_{i}$ and $\omega_{i}$ are the angular position and velocity for 101 data points during a walking cycle.  
