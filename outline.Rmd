@@ -1,0 +1,85 @@
+---
+title: "Project Outline"
+author: "Teresa Chen, Ting-fen Lin"
+date: "4/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(rio)
+
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE)
+```
+
+
+## What's this project about?
+
+The main purpose of the project is to calculate two outcome variables indicating human **joint-joint coordination** and **variability of coordination** during body movement. These two variables ared called *inter-joint continuous relative phase (CRP)* and *deviation phase (DP)*, respectily. They are widely used in the field of biomechanics, but to our knowlege there is no R function/package avalible designed for it. 
+
+
+## The chosen format(s)
+
+Dashboard
+
+## Whether the purpose will primarily be instructive (tutorial-style) or substantive 
+
+Substantive
+
+## Description of the data source (must be publicly available)
+
+### Description of data
+
+The testing data was collected in the Motion Analysis Lab at UO. Five participants were recruited. They were asked to perform level walking on a 15-m straight walkway for a couple times. A 12-camera motion analysis system with a set of 40 reflective markers was used to record the whole body movement during walking. From the marker trajectories, 3-D human model was created and **joint data** was then calculated for further analysis.  
+
+### Glimpse of data
+
+```{r}
+df <- import(here::here("data", "F01pre_single_kinematic.txt"),
+             setclass = "tbl_df", skip = 5) %>% 
+  janitor::clean_names()
+
+head(df)
+```
+
+(needs more descriptioin here. how many trials? what's names of each column? how many rows?)============================
+
+### Tentative steps 
+
+1. Tidy data  
+(how so?)=============================  
+
+2. Calculate CRP of hip-knee
+  + Built phase portrait: plotting the normalized angular positions $\Theta$ (x-axis) and normalized angular velocities $\omega_{i}$ (y-axis). Angular positions and velocities were normalized using the following equations, where $\Theta_{i}$ and $\omega_{i}$ are the angular position and velocity for 101 data points during a walking cycle.  
+  
+  $$\Theta_{i}=\frac{2*[\Theta_{i}-min(\Theta_{i})]}{max(\Theta_{i})-min(\Theta_{i})}-1$$
+  $$\omega_{i}=\frac{\omega_{i}}{max(\omega_{i})} $$  
+  
+  + Calculate phase angles($\varphi$):  calculated using the below equation φ=tan−1(ω/θ) along each data point and unwrapped to correct discontinuities occurred during angle computation.  
+  
+  $$\varphi = \tan^{-1}(\frac{\omega}{\theta }) $$
+  
+  + Calculate CRP: obtained by subtracting the phase angles of distal joint from that of proximal joint as follows. CRP identifies the coordination between two adjacent joints.
+  
+  $$CRP_{hip\cdot knee}=\varphi_{hip} - \varphi_{knee}$$
+ 
+ 
+3. Calculate CRP of knee-ankle joint: repeating the above steps along with the following equation. 
+ $$CRP_{knee\cdot ankle}=\varphi_{knee} - \varphi_{ankle}$$
+  
+4. Calculate DP: assessed with the average value of all standard deviations calculated for each data point over a walking cycle from five CRP curves as follows.  
+
+
+$$mean(std(CRP_{i}))$$  
+
+5. Print the CRP (1-array vector) and DP (value), and plot results like this.  
+
+![](plots/plot_matlab.jpg)  
+
+6. Repeat step 1 to step 5 for five subjects.
+
+
+
+## Lingering questions (is there anything that gives you pause in terms of how your final project will address all the grading requirements)
