@@ -46,7 +46,9 @@ df <- import(here::here("data", "F01pre_single_kinematic.txt"),
 head(df)
 ```
 
-(needs more descriptioin here. how many trials? what's names of each column? how many rows?)============================
+
+Each subject has their own file. In each file, there are 101 rows, representing 101 data points during a walking cycle. 1st column (v1) is frame number. v2 - v31 are outcome variables from 5 walking trials. Each trial has 6 outcomes, including hip angle, hip velocity, knee angle, knee velocity, ankle angle, and ankle velocity.
+
 
 ### Tentative steps 
 
@@ -80,8 +82,10 @@ $$mean(std(CRP_{i}))$$
 
 ![](plots/plot_matlab.jpg)  
 
-6. Repeat step 1 to step 5 for five subjects.
+6. Repeat step 1 to step 5 for five subjects.  
 
 
 
-## Lingering questions (is there anything that gives you pause in terms of how your final project will address all the grading requirements)
+## Lingering questions 
+
+We haven't encountered any problem so far. 

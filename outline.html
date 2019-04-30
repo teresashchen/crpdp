@@ -382,7 +382,7 @@ $(document).ready(function () {
 </div>
 <div id="the-chosen-formats" class="section level2">
 <h2>The chosen format(s)</h2>
-<p>Dashboard</p>
+<p>Dashboard - codes will be written to build toward a cumulative and substantive product</p>
 </div>
 <div id="whether-the-purpose-will-primarily-be-instructive-tutorial-style-or-substantive" class="section level2">
 <h2>Whether the purpose will primarily be instructive (tutorial-style) or substantive</h2>
@@ -390,6 +390,7 @@ $(document).ready(function () {
 </div>
 <div id="description-of-the-data-source-must-be-publicly-available" class="section level2">
 <h2>Description of the data source (must be publicly available)</h2>
+<p>This set of feasibility data is from the Motion Analysis Lab at UO. They are available for public, currently housed on Github.</p>
 <div id="description-of-data" class="section level3">
 <h3>Description of data</h3>
 <p>The testing data was collected in the Motion Analysis Lab at UO. Five participants were recruited. They were asked to perform level walking on a 15-m straight walkway for a couple times. A 12-camera motion analysis system with a set of 40 reflective markers was used to record the whole body movement during walking. From the marker trajectories, 3-D human model was created and <strong>joint data</strong> was then calculated for further analysis.</p>
@@ -414,13 +415,13 @@ head(df)</code></pre>
 ## #   v16 &lt;dbl&gt;, v17 &lt;dbl&gt;, v18 &lt;dbl&gt;, v19 &lt;dbl&gt;, v20 &lt;dbl&gt;, v21 &lt;dbl&gt;,
 ## #   v22 &lt;dbl&gt;, v23 &lt;dbl&gt;, v24 &lt;dbl&gt;, v25 &lt;dbl&gt;, v26 &lt;dbl&gt;, v27 &lt;dbl&gt;,
 ## #   v28 &lt;dbl&gt;, v29 &lt;dbl&gt;, v30 &lt;dbl&gt;, v31 &lt;dbl&gt;</code></pre>
-<p>(needs more descriptioin here. how many trials? what’s names of each column? how many rows?)============================</p>
+<p>Each subject has their own file. In each file, there are 101 rows, representing 101 data points during a walking cycle. 1st column (v1) is frame number. v2 - v31 are outcome variables from 5 walking trials. Each trial has 6 outcomes, including hip angle, hip velocity, knee angle, knee velocity, ankle angle, and ankle velocity.</p>
 </div>
 <div id="tentative-steps" class="section level3">
 <h3>Tentative steps</h3>
 <ol style="list-style-type: decimal">
 <li><p>Tidy data<br />
-(how so?)=============================</p></li>
+Currently, each participant has their own long and wide data file. It is not the most optimal state to start with data analysis at this stage. Therefore, the process of data tidying will be completed first so that the dataset is structured, easy to manipulate.</p></li>
 <li>Calculate CRP of hip-knee</li>
 </ol>
 <ul>
@@ -449,8 +450,9 @@ head(df)</code></pre>
 </ol>
 </div>
 </div>
-<div id="lingering-questions-is-there-anything-that-gives-you-pause-in-terms-of-how-your-final-project-will-address-all-the-grading-requirements" class="section level2">
-<h2>Lingering questions (is there anything that gives you pause in terms of how your final project will address all the grading requirements)</h2>
+<div id="lingering-questions" class="section level2">
+<h2>Lingering questions</h2>
+<p>We haven’t encountered any problem so far.</p>
 </div>
 
 
