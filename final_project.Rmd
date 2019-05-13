@@ -1,0 +1,92 @@
+---
+title: "Final Project"
+author: "Teresa Chen; Ting-fen Lin"
+date: "5/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library("rio")
+library("here")
+library("tidyverse")
+library("rio")
+library("here")
+library("janitor")
+library("knitr")
+library("dplyr")
+
+knitr::opts_chunk$set(warning = FALSE,
+                      message = FALSE,
+                      error = TRUE,
+                      fig.width = 6.5,
+                      fig.height = 8
+                      )
+theme_set(theme_minimal(base_size = 8))
+
+
+S1 <- import(here("data", "F01pre_single_kinematic.txt"), setclass = "tbl_df") 
+S2 <- import(here("data", "F02pre_single_kinematic.txt"), setclass = "tbl_df") 
+S5 <- import(here("data", "F05pre_single_kinematic.txt"), setclass = "tbl_df") 
+S6 <- import(here("data", "F06pre_single_kinematic.txt"), setclass = "tbl_df") 
+S7 <- import(here("data", "F07pre_single_kinematic.txt"), setclass = "tbl_df") 
+
+```
+
+
+```{r Tidy data}
+
+S1$Subject_Number <- "Sub1"
+S2$Subject_Number <- "Sub2"
+S5$Subject_Number <- "Sub5"
+S6$Subject_Number <- "Sub6"
+S7$Subject_Number <- "Sub7"
+
+
+S1 <- S1[,c(32, 1:31)]
+S2 <- S2[,c(32, 1:31)]
+S5 <- S5[,c(32, 1:31)]
+S6 <- S6[,c(32, 1:31)]
+S7 <- S7[,c(26, 1:25)]
+
+S1_new <- S1[1:32, ]
+S2_new <- S2[1:32, ]
+S5_new <- S5[1:32, ]
+S6_new <- S6[1:32, ]
+S7_new <- S7[1:26, ]
+
+S_all <- bind_rows(list(S1_new, S2_new, S5_new, S6_new, S7_new))
+
+```
+
+
+```{r Calculate CRP of hip-knee}
+
+
+```
+
+
+```{r Calculate CRP of knee-ankle joint}
+
+
+```
+
+
+```{r Calculate DP}
+
+
+```
+
+
+```{r Print the CRP}
+
+
+```
+
+
+```{r Repeat step 1 to step 5 for five subjects}
+
+
+```
+
+
+
