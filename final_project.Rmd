@@ -9,11 +9,9 @@ output: html_document
 library("rio")
 library("here")
 library("tidyverse")
-library("rio")
-library("here")
 library("janitor")
 library("knitr")
-library("dplyr")
+library("fs")
 
 knitr::opts_chunk$set(warning = FALSE,
                       message = FALSE,
@@ -23,70 +21,106 @@ knitr::opts_chunk$set(warning = FALSE,
                       )
 theme_set(theme_minimal(base_size = 8))
 
+```
 
-S1 <- import(here("data", "F01pre_single_kinematic.txt"), setclass = "tbl_df") 
-S2 <- import(here("data", "F02pre_single_kinematic.txt"), setclass = "tbl_df") 
-S5 <- import(here("data", "F05pre_single_kinematic.txt"), setclass = "tbl_df") 
-S6 <- import(here("data", "F06pre_single_kinematic.txt"), setclass = "tbl_df") 
-S7 <- import(here("data", "F07pre_single_kinematic.txt"), setclass = "tbl_df") 
+## Data Preparation
+
+### Import data
+
+```{r import_data}
+
+files <- dir_ls(here("data"), glob = "*.txt")
+batch <- map_df(files, import, setclass = "tbl_df", .id = "file")
+head(batch, 20L)
 
 ```
 
+The **bacth** has data from 5 subjects.  
 
-```{r Tidy data}
+Each subject has upto 5 trials, representing 5 times of walking.  
 
-S1$Subject_Number <- "Sub1"
-S2$Subject_Number <- "Sub2"
-S5$Subject_Number <- "Sub5"
-S6$Subject_Number <- "Sub6"
-S7$Subject_Number <- "Sub7"
+Each trial generates 6 outcome variables, including:  
+
+* **hip angle**  
+* **hip velocity**  
+* **knee angle**  
+* **knee velocity**  
+* **ankle angle**   
+* **ankle velocity**  
+
+Each variable has 101 datapoints (rows), representing 0%-100% of walking cycle.
+
+There are couple issues to be solved before we can do the further analysis:  
+
+1. Column names (variable names) are meaningless. They are V1 to V31.
+2. The first 4 rows of each iteration (subject) contain information we want:
+ + **trial**:  from trial 1 upto trial 5.
+ + **outcome measurement**: angle or velocity of hip, knee, and ankle
+
+### Tidy data
+
+One function (tidy_for_v) is to  
+
+1. turn meaningless names to meaningful names, representing each **outcome measurement** and 
+2. extract **trial** information . It takes data of 1 measurment as input.  
+
+Another function (tidy_for_subject) is to apply aforementioned function to all meaningless variables (V2-V31). It takes data of 1 subject as input.
+
+```{r tidy_data}
+
+##-----------function: tidy data, using 1 vector (measurement) as input-----##
+
+tidy_for_v <- function(v){
+  v <- v %>% 
+  mutate(var = value[2],
+         trial = value[1],
+         trial = str_replace_all(trial, ".c3d", " "),
+         trial = str_replace_all(trial, "(......)_", ""),
+         var = tolower(var)) %>%
+  rename(frame = V1) %>% 
+  slice(-1:-5) %>% 
+  dplyr::select(trial, var, frame, value) 
+}
 
 
-S1 <- S1[,c(32, 1:31)]
-S2 <- S2[,c(32, 1:31)]
-S5 <- S5[,c(32, 1:31)]
-S6 <- S6[,c(32, 1:31)]
-S7 <- S7[,c(26, 1:25)]
+##------------function: tidy data, using 1 subject's data as input---------------##
+##------------note: this function has another function(tidy_for_v) inside--------##
 
-S1_new <- S1[1:32, ]
-S2_new <- S2[1:32, ]
-S5_new <- S5[1:32, ]
-S6_new <- S6[1:32, ]
-S7_new <- S7[1:26, ]
+tidy_for_subject <- function(data){
+  data_from_one_subject <- data %>% 
+    gather(temvar, value, V2:V31) %>% 
+    group_by(temvar) %>% 
+    nest() %>% 
+    mutate(tidy = map(data, tidy_for_v)) %>% 
+    dplyr::select(-data) %>%
+    unnest() 
+}
 
-S_all <- bind_rows(list(S1_new, S2_new, S5_new, S6_new, S7_new))
 
+tidy <- batch %>% 
+  mutate(file = str_replace_all(file, here("data"), ""),
+         id = parse_number(file)) %>% 
+  select(id, everything(), -file) %>% 
+  group_by(id) %>%
+  nest() %>% 
+  mutate(new_data = map(data, tidy_for_subject)) %>% 
+  dplyr::select(-data) %>%
+  unnest() %>%
+  dplyr::select(-temvar) %>%
+  filter(!is.na(value)) %>% 
+  mutate(id = as.factor(id),
+         trial = as.factor(trial),
+         var = factor(var, levels = c("right_hip_angle", "right_hip_velocity", 
+                                      "right_knee_angle", "right_knee_velocity", 
+                                      "right_ankle_angle", "right_ankle_velocity"),
+                      labels = c("hip angle", "hip velocity",
+                                 "knee angle", "knee velocity",
+                                 "ankle angle", "ankle velocity")),
+         frame = as.factor(frame),
+         value = as.numeric(value))
+
+
+head(tidy, 20L)
+str(tidy)
 ```
-
-
-```{r Calculate CRP of hip-knee}
-
-
-```
-
-
-```{r Calculate CRP of knee-ankle joint}
-
-
-```
-
-
-```{r Calculate DP}
-
-
-```
-
-
-```{r Print the CRP}
-
-
-```
-
-
-```{r Repeat step 1 to step 5 for five subjects}
-
-
-```
-
-
 
