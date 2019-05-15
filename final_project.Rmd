@@ -74,7 +74,7 @@ tidy_for_v <- function(v){
   v <- v %>% 
   mutate(var = value[2],
          trial = value[1],
-         trial = str_replace_all(trial, ".c3d", " "),
+         trial = str_replace_all(trial, ".c3d", ""),
          trial = str_replace_all(trial, "(......)_", ""),
          var = tolower(var)) %>%
   rename(frame = V1) %>% 
@@ -123,4 +123,82 @@ tidy <- batch %>%
 head(tidy, 20L)
 str(tidy)
 ```
+
+## Data Analysis
+
+### Built phase portrait
+
+```{r}
+
+normalize_angle <- function(angle){
+  
+norm_angle_data <- angle %>% 
+  mutate(norm_angle = (2* (value - min(value))/(max(value) - min(value))) - 1,
+         max_angle = max(norm_angle),
+         min_angle = min(norm_angle)) %>% 
+  rename(raw_angle = value)
+}
+
+## may consider using NSE here, substitue "value"
+
+# group_means <- function(data, frame, angle) {
+#     frame <- enquo(frame) # Quote the inputs
+#     value <- enquo(angle)
+#     
+#     data %>% select(!!value) %>%
+#      mutate(norm_angle = (2* (value - min(value))/(max(value) - min(value))) - 1,
+#          max_angle = max(norm_angle),
+#          min_angle = min(norm_angle)) %>% 
+#     rename(raw_angle = value)
+#         
+# }
+
+
+normalize_velocity <- function(velocity){
+  
+norm_velocity_data <- velocity %>% 
+  mutate(norm_velocity = value /max(abs(value)),
+         max_velocity = max(norm_velocity),
+         min_velocity = min(norm_velocity)) %>% 
+  rename(raw_velocity = value)
+  
+}
+
+normalize <- tidy %>% 
+  separate(var, into = c("joint", "measure")) %>% 
+  group_by(id, trial, joint, measure) %>% 
+  nest() %>% 
+  spread(measure, data) %>% 
+  mutate(norm_angle = map(angle, normalize_angle),
+         norm_velocity = map(velocity, normalize_velocity)) %>% 
+  dplyr::select(-angle, -velocity) %>% 
+  unnest() %>% 
+  dplyr::select(-frame1)
+
+normalize %>%
+  group_by(id, trial, joint) %>%
+  nest() %>%
+  mutate(phaseplot = map(data, function(data){
+    
+                data %>% ggplot(aes(x = norm_angle, y = norm_velocity)) +
+                              geom_point()
+
+                          }))
+
+
+test <- normalize %>% 
+  filter(id == 1, trial == 1, joint == "ankle")
+
+head(test)
+
+test %>% ggplot(aes(norm_angle, norm_velocity)) +
+  geom_point() +
+  geom_path() +
+  geom_point(data = filter(test, frame == 1), color = "red", size = 3) +
+  geom_vline(xintercept = 0, color = "gray50") +
+  geom_hline(yintercept = 0, color = "gray50")
+```
+
+
+
 
