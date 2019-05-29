@@ -2,7 +2,9 @@
 title: "Final Project"
 author: "Teresa Chen; Ting-fen Lin"
 date: "5/12/2019"
-output: html_document
+output: 
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -22,6 +24,18 @@ knitr::opts_chunk$set(warning = FALSE,
 theme_set(theme_minimal(base_size = 8))
 
 ```
+
+----------required packages----------
+
+library("rio")  
+library("here")  
+library("tidyverse")  
+library("janitor")  
+library("knitr")  
+library("fs")  
+library("signal")  
+
+-----------------------------------
 
 
 ## What's this project about?
@@ -376,7 +390,7 @@ dp <- crp_hipknee %>%
 head(dp)
 ```
 
-To do list: 
+## To do list: 
 
 1. Add **id**, **trial**, **angle** information in each plot
 2. Combine plots from **phase_plot**, **phase_angle_plot**, **crp_hipknee_plot**, **crp_kneeankle_plot**

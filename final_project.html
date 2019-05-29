@@ -375,7 +375,36 @@ $(document).ready(function () {
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#whats-this-project-about">What’s this project about?</a><ul>
+<li><a href="#description-of-data">Description of data</a></li>
+</ul></li>
+<li><a href="#data-preparation">Data Preparation</a><ul>
+<li><a href="#import-data">Import data</a></li>
+<li><a href="#tidy-data">Tidy data</a></li>
+</ul></li>
+<li><a href="#data-analysis">Data Analysis</a><ul>
+<li><a href="#built-phase-portrait">Built phase portrait</a></li>
+<li><a href="#calculate-phase-angle">Calculate phase angle</a></li>
+<li><a href="#plot-time-series-phase-angle-plot">Plot time-series phase angle plot</a></li>
+<li><a href="#calculate-hip-knee-crp">Calculate hip-knee CRP</a></li>
+<li><a href="#calculate-knee-ankle-crp">Calculate knee-ankle CRP</a></li>
+<li><a href="#calculate-dp">Calculate DP</a></li>
+</ul></li>
+<li><a href="#to-do-list">To do list:</a></li>
+</ul>
+</div>
 
+<p>———-required packages———-</p>
+<p>library(“rio”)<br />
+library(“here”)<br />
+library(“tidyverse”)<br />
+library(“janitor”)<br />
+library(“knitr”)<br />
+library(“fs”)<br />
+library(“signal”)</p>
+<hr />
 <div id="whats-this-project-about" class="section level2">
 <h2>What’s this project about?</h2>
 <p>The main purpose of the project is to calculate two outcome variables indicating human <strong>joint-joint coordination</strong> and <strong>variability of coordination</strong> during body movement. These two variables ared called <em>inter-joint continuous relative phase (CRP)</em> and <em>deviation phase (DP)</em>, respectily. They are widely used in the field of biomechanics, but to our knowlege there is no R function/package avalible designed for it.</p>
@@ -817,12 +846,14 @@ head(dp)</code></pre>
 ## 3 5           4.51         8.41
 ## 4 6           5.74        12.5 
 ## 5 7         208.         189.</code></pre>
-<p>To do list:</p>
+</div>
+</div>
+<div id="to-do-list" class="section level2">
+<h2>To do list:</h2>
 <ol style="list-style-type: decimal">
 <li>Add <strong>id</strong>, <strong>trial</strong>, <strong>angle</strong> information in each plot</li>
 <li>Combine plots from <strong>phase_plot</strong>, <strong>phase_angle_plot</strong>, <strong>crp_hipknee_plot</strong>, <strong>crp_kneeankle_plot</strong></li>
 </ol>
-</div>
 </div>
 
 
