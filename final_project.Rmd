@@ -23,6 +23,19 @@ theme_set(theme_minimal(base_size = 8))
 
 ```
 
+
+## What's this project about?
+
+The main purpose of the project is to calculate two outcome variables indicating human **joint-joint coordination** and **variability of coordination** during body movement. These two variables ared called *inter-joint continuous relative phase (CRP)* and *deviation phase (DP)*, respectily. They are widely used in the field of biomechanics, but to our knowlege there is no R function/package avalible designed for it. 
+
+
+### Description of data
+
+The data was collected in the Motion Analysis Lab at UO. Five participants were recruited. They were asked to perform level walking on a 15-m straight walkway for a couple times. A 12-camera motion analysis system with a set of 40 reflective markers was used to record the whole body movement during walking (Figure 1, left). From the marker trajectories (Figure 1, middle), 3-D human model was created (Figure 1, right) and **joint data** was then calculated for further analysis.  
+
+![Figure 1](plots/plot_model.jpg)  
+
+
 ## Data Preparation
 
 ### Import data
@@ -68,7 +81,7 @@ Another function (tidy_for_subject) is to apply aforementioned function to all m
 
 ```{r tidy_data}
 
-##-----------function: tidy data, using 1 vector (measurement) as input-----##
+##-----------function 01: tidy data, using 1 vector (measurement) as input-----##
 
 tidy_for_v <- function(v){
   v <- v %>% 
@@ -83,7 +96,7 @@ tidy_for_v <- function(v){
 }
 
 
-##------------function: tidy data, using 1 subject's data as input---------------##
+##------------function 02: tidy data, using 1 subject's data as input---------------##
 ##------------note: this function has another function(tidy_for_v) inside--------##
 
 tidy_for_subject <- function(data){
@@ -128,7 +141,14 @@ str(tidy)
 
 ### Built phase portrait
 
-```{r}
+Phase portrait is to plot the normalized angular positions $\Theta$ (x-axis) and normalized angular velocities $\omega_{i}$ (y-axis). Angular positions and velocities were normalized using the following equations, where $\Theta_{i}$ and $\omega_{i}$ are the angular position and velocity for 101 data points during a walking cycle.  
+  
+  $$\Theta_{i}=\frac{2*[\Theta_{i}-min(\Theta_{i})]}{max(\Theta_{i})-min(\Theta_{i})}-1$$
+  $$\omega_{i}=\frac{\omega_{i}}{max(\omega_{i})} $$  
+  
+```{r normalize}
+
+##----------function 03: to normalize angle---------##
 
 normalize_angle <- function(angle){
   
@@ -154,6 +174,8 @@ norm_angle_data <- angle %>%
 # }
 
 
+##-------------function 04: to normalize velocity----------##
+
 normalize_velocity <- function(velocity){
   
 norm_velocity_data <- velocity %>% 
@@ -175,30 +197,86 @@ normalize <- tidy %>%
   unnest() %>% 
   dplyr::select(-frame1)
 
-normalize %>%
+head(normalize)
+```
+
+
+```{r phase_portrait}
+
+## add ggplot labs ##
+
+phase_plot <- normalize %>%
   group_by(id, trial, joint) %>%
   nest() %>%
-  mutate(phaseplot = map(data, function(data){
+  mutate(phase_plot = map(data, function(data){
     
-                data %>% ggplot(aes(x = norm_angle, y = norm_velocity)) +
-                              geom_point()
+                data %>% ggplot(aes(norm_angle, norm_velocity)) +
+                           geom_point() +
+                           geom_path() +
+                           geom_point(data = filter(data, frame == 1), 
+                                     color = "red", size = 3) +
+                           geom_vline(xintercept = 0, color = "gray50") +
+                           geom_hline(yintercept = 0, color = "gray50")
 
                           }))
 
 
-test <- normalize %>% 
-  filter(id == 1, trial == 1, joint == "ankle")
+head(phase_plot)
+phase_plot$phase_plot[[1]]
 
-head(test)
-
-test %>% ggplot(aes(norm_angle, norm_velocity)) +
-  geom_point() +
-  geom_path() +
-  geom_point(data = filter(test, frame == 1), color = "red", size = 3) +
-  geom_vline(xintercept = 0, color = "gray50") +
-  geom_hline(yintercept = 0, color = "gray50")
 ```
 
 
+### Calculate phase angle
+
+Phase angle($\varphi$) is calculated using the below equation along each data point and unwrapped to correct discontinuities occurred during angle computation.  
 
 
+ $$\varphi = \tan^{-1}(\frac{\omega}{\theta }) $$
+
+```{r phase_angle}
+
+phase_angle <- phase_plot %>% 
+  mutate(phase_angle = map(data, function(data){
+    
+    tibble(frame = seq(1, 101, 1),
+           phase_angle = signal::unwrap((atan2(data$norm_velocity, data$norm_angle))) * 180 / pi)
+    
+    
+  })) %>% 
+  select(-phase_plot, -data) %>% 
+  unnest() 
+
+
+head(phase_angle)
+
+```
+
+### Plot time-series phase angle plot
+
+```{r phase_angle_plot}
+
+
+phase_angle_plot <- phase_angle %>% 
+  group_by(id, trial, joint) %>% 
+  nest() %>% 
+  mutate(phase_angle_plot = map(data, function(data){
+    
+    data %>%
+      ggplot(aes(x = frame, y = phase_angle)) +
+      geom_point()
+    
+  }))
+
+head(phase_angle_plot)
+phase_angle_plot$phase_angle_plot[[1]]
+
+```
+
+
+### Calculate CRP
+
+CRP is obtained by subtracting the phase angles of distal joint from that of proximal joint as follows. CRP identifies the coordination between two adjacent joints.
+  
+  $$CRP_{hip\cdot knee}=\varphi_{hip} - \varphi_{knee}$$
+ 
