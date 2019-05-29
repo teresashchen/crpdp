@@ -14,7 +14,7 @@ library("tidyverse")
 library("janitor")
 library("knitr")
 library("fs")
-
+library("glue")
 knitr::opts_chunk$set(warning = FALSE,
                       message = FALSE,
                       error = TRUE,
@@ -34,7 +34,7 @@ library("janitor")
 library("knitr")  
 library("fs")  
 library("signal")  
-
+library("glue")
 -----------------------------------
 
 
@@ -222,24 +222,27 @@ head(normalize)
 
 ## add ggplot labs ##
 
-phase_plot <- normalize %>%
-  group_by(id, trial, joint) %>%
-  nest() %>%
-  mutate(phase_plot = map(data, function(data){
-    
-                data %>% ggplot(aes(norm_angle, norm_velocity)) +
+phase_portrait <- normalize %>% 
+  group_by(id, trial, joint) %>% 
+  nest() %>% 
+  mutate(phase_portrait = pmap(list(id, trial, joint, data), 
+                                function(id, trial, joint, data){
+     data %>% ggplot(aes(norm_angle, norm_velocity)) +
                            geom_point() +
                            geom_path() +
                            geom_point(data = filter(data, frame == 1), 
                                      color = "red", size = 3) +
                            geom_vline(xintercept = 0, color = "gray50") +
-                           geom_hline(yintercept = 0, color = "gray50")
+                           geom_hline(yintercept = 0, color = "gray50") +
+                           labs(title = glue("Phase Portrait of {str_to_title(joint)} Joint"),
+                                subtitle = glue("Subjet #{id}, Trial #{trial}"),
+                                caption = "The red dot represents the start of cycle", 
+                                x = "Normalized Angle",
+                                y = "Normalized Velocity")}))
 
-                          }))
 
-
-head(phase_plot)
-phase_plot$phase_plot[[1]]  ## example plot
+head(phase_portrait)
+phase_portrait$phase_portrait[[1]]  ## example plot
 
 ```
 
@@ -253,7 +256,7 @@ Phase angle($\varphi$) is calculated using the below equation along each data po
 
 ```{r phase_angle}
 
-phase_angle <- phase_plot %>% 
+phase_angle <- phase_portrait %>% 
   mutate(phase_angle = map(data, function(data){
     
     tibble(frame = seq(1, 101, 1),
@@ -261,7 +264,7 @@ phase_angle <- phase_plot %>%
     
     
   })) %>% 
-  select(-phase_plot, -data) %>% 
+  select(-phase_portrait, -data) %>% 
   unnest() 
 
 
@@ -277,13 +280,18 @@ head(phase_angle)
 phase_angle_plot <- phase_angle %>% 
   group_by(id, trial, joint) %>% 
   nest() %>% 
-  mutate(phase_angle_plot = map(data, function(data){
-    
+  mutate(phase_angle_plot = pmap(list(id, trial, joint, data), 
+                                 function(id, trial, joint, data){
     data %>%
       ggplot(aes(x = frame, y = phase_angle)) +
-      geom_point()
-    
+      geom_point() +
+      labs(title = glue("Phase Angle of {str_to_title(joint)} Joint During A Gait Cycle"),
+           subtitle = glue("Subjet #{id}, Trial #{trial}"),
+           y = "Phase Angle",
+           x = "% of Gait Cycle")
   }))
+
+
 
 head(phase_angle_plot)
 phase_angle_plot$phase_angle_plot[[1]] ## example plot
@@ -300,8 +308,6 @@ CRP is obtained by subtracting the phase angles of distal joint from that of pro
  
 ```{r crp_hipknee}
 
-head(phase_angle)
-
 crp_hipknee <- phase_angle %>% 
   filter(joint == "hip" | joint == "knee") %>% 
   spread(joint, phase_angle) %>% 
@@ -314,17 +320,21 @@ head(crp_hipknee)
 
 ```{r crp_hipknee_plot}
 
-
 crp_hipknee_plot <- crp_hipknee %>% 
   group_by(id, trial) %>% 
   nest() %>% 
-  mutate(crp_hipknee_plot = map(data, function(data){
-    
+  mutate(crp_hipknee_plot = pmap(list(id, trial, data), 
+                                 function(id, trial, data){
     data %>% 
       ggplot(aes(x = frame, y = crp_hipknee)) +
-      geom_point()
+      geom_point() +
+      labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
+           subtitle = glue("Subject #{id}, Trial #{trial}"),
+           y = "CRP",
+           x = "% of Gait Cycle")
     
   }))
+
 
 head(crp_hipknee_plot)
 crp_hipknee_plot$crp_hipknee_plot[[1]] ## example plot
@@ -354,11 +364,15 @@ head(crp_kneeankle)
 crp_kneeankle_plot <- crp_kneeankle %>% 
   group_by(id, trial) %>% 
   nest() %>% 
-  mutate(crp_kneeankle_plot = map(data, function(data){
-    
+  mutate(crp_kneeankle_plot = pmap(list(id, trial, data), 
+                                   function(id, trial, data){
     data %>% 
       ggplot(aes(x = frame, y = crp_kneeankle)) +
-      geom_point()
+      geom_point() +
+      labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
+           subtitle = glue("Subject #{id}, Trial #{trial}"),
+           y = "CRP",
+           x = "% of Gait Cycle")
     
   }))
 
@@ -392,5 +406,5 @@ head(dp)
 
 ## To do list: 
 
-1. Add **id**, **trial**, **angle** information in each plot
-2. Combine plots from **phase_plot**, **phase_angle_plot**, **crp_hipknee_plot**, **crp_kneeankle_plot**
+1. Combine plots from **phase_protrait**, **phase_angle_plot**, **crp_hipknee_plot**, **crp_kneeankle_plot**
+2. Lauch a Shiny dashboard
