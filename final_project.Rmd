@@ -35,6 +35,9 @@ The data was collected in the Motion Analysis Lab at UO. Five participants were 
 
 ![Figure 1](plots/plot_model.jpg)  
 
+The goal of project is to create a shiny dashboard, which 1) prints the CRP and DP values, and 2) prints plots like Figure 2.  
+
+![Figure 2](plots/plot_matlab.jpg) 
 
 ## Data Preparation
 
@@ -222,7 +225,7 @@ phase_plot <- normalize %>%
 
 
 head(phase_plot)
-phase_plot$phase_plot[[1]]
+phase_plot$phase_plot[[1]]  ## example plot
 
 ```
 
@@ -269,14 +272,111 @@ phase_angle_plot <- phase_angle %>%
   }))
 
 head(phase_angle_plot)
-phase_angle_plot$phase_angle_plot[[1]]
+phase_angle_plot$phase_angle_plot[[1]] ## example plot
 
 ```
 
 
-### Calculate CRP
+### Calculate hip-knee CRP
 
 CRP is obtained by subtracting the phase angles of distal joint from that of proximal joint as follows. CRP identifies the coordination between two adjacent joints.
   
   $$CRP_{hip\cdot knee}=\varphi_{hip} - \varphi_{knee}$$
  
+ 
+```{r crp_hipknee}
+
+head(phase_angle)
+
+crp_hipknee <- phase_angle %>% 
+  filter(joint == "hip" | joint == "knee") %>% 
+  spread(joint, phase_angle) %>% 
+  mutate(crp_hipknee = hip - knee)
+
+
+head(crp_hipknee)
+```
+
+
+```{r crp_hipknee_plot}
+
+
+crp_hipknee_plot <- crp_hipknee %>% 
+  group_by(id, trial) %>% 
+  nest() %>% 
+  mutate(crp_hipknee_plot = map(data, function(data){
+    
+    data %>% 
+      ggplot(aes(x = frame, y = crp_hipknee)) +
+      geom_point()
+    
+  }))
+
+head(crp_hipknee_plot)
+crp_hipknee_plot$crp_hipknee_plot[[1]] ## example plot
+```
+
+### Calculate knee-ankle CRP
+
+Similarly, knee-ankle CRP is obtained using the following eqution: 
+
+ $$CRP_{knee\cdot ankle}=\varphi_{knee} - \varphi_{ankle}$$
+  
+
+
+```{r crp_kneeankle}
+
+crp_kneeankle <- phase_angle %>% 
+  filter(joint == "knee" | joint == "ankle") %>% 
+  spread(joint, phase_angle) %>% 
+  mutate(crp_kneeankle = knee - ankle)
+
+head(crp_kneeankle)
+```
+
+```{r crp_kneeankle_plot}
+
+
+crp_kneeankle_plot <- crp_kneeankle %>% 
+  group_by(id, trial) %>% 
+  nest() %>% 
+  mutate(crp_kneeankle_plot = map(data, function(data){
+    
+    data %>% 
+      ggplot(aes(x = frame, y = crp_kneeankle)) +
+      geom_point()
+    
+  }))
+
+head(crp_kneeankle_plot)
+crp_kneeankle_plot$crp_kneeankle_plot[[1]]  ## example plot
+
+
+
+```
+
+### Calculate DP
+
+DP is the average value of all standard deviations calculated for each data point over a walking cycle from upto five CRP curves as follows.  
+
+$$mean(std(CRP_{i}))$$  
+
+
+```{r}
+
+dp <- crp_hipknee %>% 
+  left_join(crp_kneeankle) %>% 
+  group_by(id, frame) %>% 
+  summarise(crp_hipknee_sd = sd(crp_hipknee),
+            crp_kneeankle_sd = sd(crp_kneeankle)) %>% 
+  group_by(id) %>% 
+  summarise(dp_hipknee = mean(crp_hipknee_sd),
+            dp_kneeankle = mean(crp_kneeankle_sd))
+
+head(dp)
+```
+
+To do list: 
+
+1. Add **id**, **trial**, **angle** information in each plot
+2. Combine plots from **phase_plot**, **phase_angle_plot**, **crp_hipknee_plot**, **crp_kneeankle_plot**
