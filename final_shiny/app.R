@@ -97,6 +97,25 @@ normalize <- tidy %>%
     dplyr::select(-frame1)
 
 
+phase_portrait <- normalize %>% 
+    group_by(id, trial, joint) %>% 
+    nest() %>% 
+    mutate(phase_portrait = pmap(list(id, trial, joint, data), 
+                                 function(id, trial, joint, data){
+                                     data %>% ggplot(aes(norm_angle, norm_velocity)) +
+                                         geom_point() +
+                                         geom_path() +
+                                         geom_point(data = filter(data, frame == 1), 
+                                                    color = "red", size = 3) +
+                                         geom_vline(xintercept = 0, color = "gray50") +
+                                         geom_hline(yintercept = 0, color = "gray50") +
+                                         labs(title = glue("Phase Portrait of {str_to_title(joint)} Joint"),
+                                              subtitle = glue("Subjet #{id}, Trial #{trial}"),
+                                              caption = "The red dot represents the start of cycle", 
+                                              x = "Normalized Angle",
+                                              y = "Normalized Velocity")}))
+
+
 phase_angle <- phase_portrait %>% 
     mutate(phase_angle = map(data, function(data){
         
