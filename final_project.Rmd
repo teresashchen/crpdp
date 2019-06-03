@@ -15,13 +15,15 @@ library("janitor")
 library("knitr")
 library("fs")
 library("glue")
+library("colorblindr")
+library("DT")
 knitr::opts_chunk$set(warning = FALSE,
                       message = FALSE,
                       error = TRUE,
-                      fig.width = 6.5,
+                      fig.width = 10,
                       fig.height = 8
                       )
-theme_set(theme_minimal(base_size = 8))
+theme_set(theme_minimal(base_size = 16))
 
 ```
 
@@ -35,6 +37,8 @@ library("knitr")
 library("fs")  
 library("signal")  
 library("glue")
+library("colorblindr")
+library("DT")
 -----------------------------------
 
 
@@ -212,7 +216,8 @@ normalize <- tidy %>%
          norm_velocity = map(velocity, normalize_velocity)) %>% 
   dplyr::select(-angle, -velocity) %>% 
   unnest() %>% 
-  dplyr::select(-frame1)
+  dplyr::select(-frame1) %>% 
+  mutate(joint = factor(joint, levels = c("ankle", "knee", "hip")))
 
 head(normalize)
 ```
@@ -222,28 +227,33 @@ head(normalize)
 
 ## add ggplot labs ##
 
+
 phase_portrait <- normalize %>% 
-  group_by(id, trial, joint) %>% 
+  group_by(id) %>% 
   nest() %>% 
-  mutate(phase_portrait = pmap(list(id, trial, joint, data), 
-                                function(id, trial, joint, data){
-     data %>% ggplot(aes(norm_angle, norm_velocity)) +
-                           geom_point() +
-                           geom_path() +
-                           geom_point(data = filter(data, frame == 1), 
-                                     color = "red", size = 3) +
-                           geom_vline(xintercept = 0, color = "gray50") +
-                           geom_hline(yintercept = 0, color = "gray50") +
-                           labs(title = glue("Phase Portrait of {str_to_title(joint)} Joint"),
-                                subtitle = glue("Subjet #{id}, Trial #{trial}"),
-                                caption = "The red dot represents the start of cycle", 
-                                x = "Normalized Angle",
-                                y = "Normalized Velocity")}))
+  mutate(phase_portrait = map2(id, data, function(id, data){
+    
+    data %>% ggplot(aes(norm_angle, norm_velocity, color = trial)) +
+      geom_point() +
+      geom_path() +
+      geom_point(data = filter(data, frame == 1), 
+                 color = "#000000", size = 3) +
+      geom_vline(xintercept = 0, color = "gray50") +
+      geom_hline(yintercept = 0, color = "gray50") +
+      facet_wrap(~joint) +
+      scale_color_OkabeIto() +
+      labs(title = "Phase Portrait of Joint",
+           subtitle = glue("Subjet #{id}"),
+           caption = "The red dot represents the start of cycle", 
+           x = "Normalized Angle",
+           y = "Normalized Velocity")}))
+
+
 
 
 head(phase_portrait)
 phase_portrait$phase_portrait[[1]]  ## example plot
-
+phase_portrait$data[[1]]
 ```
 
 
@@ -257,14 +267,18 @@ Phase angle($\varphi$) is calculated using the below equation along each data po
 ```{r phase_angle}
 
 phase_angle <- phase_portrait %>% 
+  select(-phase_portrait) %>% 
+  unnest() %>% 
+  select(id, trial, joint, norm_angle, norm_velocity) %>% 
+  group_by(id, trial, joint) %>% 
+  nest() %>% 
   mutate(phase_angle = map(data, function(data){
     
-    tibble(frame = seq(1, 101, 1),
-           phase_angle = signal::unwrap((atan2(data$norm_velocity, data$norm_angle))) * 180 / pi)
-    
+     tibble(frame = seq(1, 101, 1),
+            phase_angle = signal::unwrap((atan2(data$norm_velocity, data$norm_angle))) * 180 / pi)
     
   })) %>% 
-  select(-phase_portrait, -data) %>% 
+  select(-data) %>% 
   unnest() 
 
 
@@ -278,15 +292,17 @@ head(phase_angle)
 
 
 phase_angle_plot <- phase_angle %>% 
-  group_by(id, trial, joint) %>% 
+  group_by(id) %>% 
   nest() %>% 
-  mutate(phase_angle_plot = pmap(list(id, trial, joint, data), 
-                                 function(id, trial, joint, data){
+  mutate(phase_angle_plot = map2(id, data, function(id, data){
+    
     data %>%
-      ggplot(aes(x = frame, y = phase_angle)) +
+      ggplot(aes(x = frame, y = phase_angle, color = trial)) +
       geom_point() +
-      labs(title = glue("Phase Angle of {str_to_title(joint)} Joint During A Gait Cycle"),
-           subtitle = glue("Subjet #{id}, Trial #{trial}"),
+      scale_color_OkabeIto() +
+      facet_wrap(~joint) +
+      labs(title = "Phase Angle of Joint During A Gait Cycle",
+           subtitle = glue("Subjet #{id}"),
            y = "Phase Angle",
            x = "% of Gait Cycle")
   }))
@@ -321,15 +337,17 @@ head(crp_hipknee)
 ```{r crp_hipknee_plot}
 
 crp_hipknee_plot <- crp_hipknee %>% 
-  group_by(id, trial) %>% 
+  group_by(id) %>% 
   nest() %>% 
-  mutate(crp_hipknee_plot = pmap(list(id, trial, data), 
-                                 function(id, trial, data){
+  mutate(crp_hipknee_plot = pmap(list(id, data), 
+                                 function(id, data){
     data %>% 
-      ggplot(aes(x = frame, y = crp_hipknee)) +
+      ggplot(aes(x = frame, y = crp_hipknee, color = trial)) +
       geom_point() +
+      geom_path() +                               
+      scale_color_OkabeIto() +                               
       labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
-           subtitle = glue("Subject #{id}, Trial #{trial}"),
+           subtitle = glue("Subject #{id}"),
            y = "CRP",
            x = "% of Gait Cycle")
     
@@ -362,15 +380,17 @@ head(crp_kneeankle)
 
 
 crp_kneeankle_plot <- crp_kneeankle %>% 
-  group_by(id, trial) %>% 
+  group_by(id) %>% 
   nest() %>% 
-  mutate(crp_kneeankle_plot = pmap(list(id, trial, data), 
-                                   function(id, trial, data){
+  mutate(crp_kneeankle_plot = pmap(list(id, data), 
+                                   function(id, data){
     data %>% 
-      ggplot(aes(x = frame, y = crp_kneeankle)) +
+      ggplot(aes(x = frame, y = crp_kneeankle, color = trial)) +
       geom_point() +
+      geom_path() +                                 
+      scale_color_OkabeIto() +                                 
       labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
-           subtitle = glue("Subject #{id}, Trial #{trial}"),
+           subtitle = glue("Subject #{id}"),
            y = "CRP",
            x = "% of Gait Cycle")
     
@@ -401,7 +421,13 @@ dp <- crp_hipknee %>%
   summarise(dp_hipknee = mean(crp_hipknee_sd),
             dp_kneeankle = mean(crp_kneeankle_sd))
 
-head(dp)
+dp %>% 
+  mutate(`Deviation Phase:Hip-Knee` = dp_hipknee,
+         `Deviation Phase:Knee-Ankle` = dp_kneeankle) %>% 
+  select(-dp_hipknee, -dp_kneeankle) %>% 
+  DT::datatable()
+
+
 ```
 
 ## To do list: 
