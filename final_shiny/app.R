@@ -128,10 +128,7 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
             selectInput("select", "Choose a movement", 
-                        choices = c("Phase Portrait" = "phase_portrait",
-                                    "Phase Angle" = "phase_angle_plot",
-                                    "Hip-Knee" = "crp_hipknee_plot",
-                                    "Knee-Ankle" = "crp_kneeankle_plot"))),
+                        choices = c("Phase Portrait" = "normalize"))),
 
         # Show a plot of the generated distribution
         mainPanel(
@@ -147,7 +144,7 @@ server <- function(input, output) {
 output$phase_portrait <- renderPlot({
 
 #Render a plot
-        phase_portrait <- normalize %>% 
+        plot <- enquo(input$select) %>% 
             group_by(id, trial, joint) %>% 
             nest() %>% 
             mutate(phase_portrait = pmap(list(id, trial, joint, data), 
@@ -173,158 +170,158 @@ output$phase_portrait <- renderPlot({
 shinyApp(ui = ui, server = server)
 
 
-# 2 Define UI for application that draws plot
-ui <- fluidPage(
-    
-    # Application title
-    titlePanel("Human Body Movement"),
-    
-    # Sidebar with a slider input for participants 
-    sidebarLayout(
-        sidebarPanel(
-            selectInput("select", "Choose a movement", 
-                        choices = c("Phase Portrait" = "phase_portrait",
-                                    "Phase Angle" = "phase_angle_plot",
-                                    "Hip-Knee" = "crp_hipknee_plot",
-                                    "Knee-Ankle" = "crp_kneeankle_plot"))),
-        
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput("phase_angle_plot", width = "100%", height = "400px")
-        )
-    )
-)
-
-# Define server logic required to draw a plot2
-server <- function(input, output) {
-    
-#Fill in the spot created for a plot
-output$phase_angle_plot <- renderPlot({
-        
-#Render a plot
-    phase_angle_plot <- phase_angle %>% 
-        group_by(id, trial, joint) %>% 
-        nest() %>% 
-        mutate(phase_angle_plot = pmap(list(id, trial, joint, data), 
-                                       function(id, trial, joint, data){
-                                           data %>%
-                                               ggplot(aes(x = frame, y = phase_angle)) +
-                                               geom_point() +
-                                               labs(title = glue("Phase Angle of {str_to_title(joint)} Joint During A Gait Cycle"),
-                                                    subtitle = glue("Subjet #{id}, Trial #{trial}"),
-                                                    y = "Phase Angle",
-                                                    x = "% of Gait Cycle")}))
-    
-    phase_angle_plot$phase_angle_plot[[1]]
-})
-}
-
-# Run the application 
-shinyApp(ui = ui, server = server)
-
-
-
-# 3 Define UI for application that draws plot
-ui <- fluidPage(
-    
-    # Application title
-    titlePanel("Human Body Movement"),
-    
-    # Sidebar with a slider input for participants 
-    sidebarLayout(
-        sidebarPanel(
-            selectInput("select", "Choose a movement", 
-                        choices = c("Phase Portrait" = "phase_portrait",
-                                    "Phase Angle" = "phase_angle_plot",
-                                    "Hip-Knee" = "crp_hipknee_plot",
-                                    "Knee-Ankle" = "crp_kneeankle_plot"))),
-        
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput("crp_hipknee_plot", width = "100%", height = "400px")
-        )
-    )
-)
-
-# Define server logic required to draw a plot3
-server <- function(input, output) {
-    
-    #Fill in the spot created for a plot
-    output$crp_hipknee_plot <- renderPlot({
-        
-        #Render a plot
-        crp_hipknee_plot <- crp_hipknee %>% 
-            group_by(id, trial) %>% 
-            nest() %>% 
-            mutate(crp_hipknee_plot = pmap(list(id, trial, data), 
-                                           function(id, trial, data){
-                                               data %>% 
-                                                   ggplot(aes(x = frame, y = crp_hipknee)) +
-                                                   geom_point() +
-                                                   labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
-                                                        subtitle = glue("Subject #{id}, Trial #{trial}"),
-                                                        y = "CRP",
-                                                        x = "% of Gait Cycle")
-                                               
-                                           }))
-        
-        crp_hipknee_plot$crp_hipknee_plot[[1]]
-    })
-}
-
-# Run the application 
-shinyApp(ui = ui, server = server)
-
-
-
-# 4 Define UI for application that draws plot
-ui <- fluidPage(
-    
-    # Application title
-    titlePanel("Human Body Movement"),
-    
-    # Sidebar with a slider input for participants 
-    sidebarLayout(
-        sidebarPanel(
-            selectInput("select", "Choose a movement", 
-                        choices = c("Phase Portrait" = "phase_portrait",
-                                    "Phase Angle" = "phase_angle_plot",
-                                    "Hip-Knee" = "crp_hipknee_plot",
-                                    "Knee-Ankle" = "crp_kneeankle_plot"))),
-        
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput("crp_kneeankle_plot", width = "100%", height = "400px")
-        )
-    )
-)
-
-# Define server logic required to draw a plot4
-server <- function(input, output) {
-    
-    #Fill in the spot created for a plot
-    output$crp_kneeankle_plot <- renderPlot({
-        
-        #Render a plot
-        crp_kneeankle_plot <- crp_kneeankle %>% 
-            group_by(id, trial) %>% 
-            nest() %>% 
-            mutate(crp_kneeankle_plot = pmap(list(id, trial, data), 
-                                             function(id, trial, data){
-                                                 data %>% 
-                                                     ggplot(aes(x = frame, y = crp_kneeankle)) +
-                                                     geom_point() +
-                                                     labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
-                                                          subtitle = glue("Subject #{id}, Trial #{trial}"),
-                                                          y = "CRP",
-                                                          x = "% of Gait Cycle")
-                                                 
-                                             }))
-        
-        crp_kneeankle_plot$crp_kneeankle_plot[[1]]
-    })
-}
-
-# Run the application 
-shinyApp(ui = ui, server = server)
-
+# # 2 Define UI for application that draws plot
+# ui <- fluidPage(
+#     
+#     # Application title
+#     titlePanel("Human Body Movement"),
+#     
+#     # Sidebar with a slider input for participants 
+#     sidebarLayout(
+#         sidebarPanel(
+#             selectInput("select", "Choose a movement", 
+#                         choices = c("Phase Portrait" = "phase_portrait",
+#                                     "Phase Angle" = "phase_angle_plot",
+#                                     "Hip-Knee" = "crp_hipknee_plot",
+#                                     "Knee-Ankle" = "crp_kneeankle_plot"))),
+#         
+#         # Show a plot of the generated distribution
+#         mainPanel(
+#             plotOutput("phase_angle_plot", width = "100%", height = "400px")
+#         )
+#     )
+# )
+# 
+# # Define server logic required to draw a plot2
+# server <- function(input, output) {
+#     
+# #Fill in the spot created for a plot
+# output$phase_angle_plot <- renderPlot({
+#         
+# #Render a plot
+#     phase_angle_plot <- phase_angle %>% 
+#         group_by(id, trial, joint) %>% 
+#         nest() %>% 
+#         mutate(phase_angle_plot = pmap(list(id, trial, joint, data), 
+#                                        function(id, trial, joint, data){
+#                                            data %>%
+#                                                ggplot(aes(x = frame, y = phase_angle)) +
+#                                                geom_point() +
+#                                                labs(title = glue("Phase Angle of {str_to_title(joint)} Joint During A Gait Cycle"),
+#                                                     subtitle = glue("Subjet #{id}, Trial #{trial}"),
+#                                                     y = "Phase Angle",
+#                                                     x = "% of Gait Cycle")}))
+#     
+#     phase_angle_plot$phase_angle_plot[[1]]
+# })
+# }
+# 
+# # Run the application 
+# shinyApp(ui = ui, server = server)
+# 
+# 
+# 
+# # 3 Define UI for application that draws plot
+# ui <- fluidPage(
+#     
+#     # Application title
+#     titlePanel("Human Body Movement"),
+#     
+#     # Sidebar with a slider input for participants 
+#     sidebarLayout(
+#         sidebarPanel(
+#             selectInput("select", "Choose a movement", 
+#                         choices = c("Phase Portrait" = "phase_portrait",
+#                                     "Phase Angle" = "phase_angle_plot",
+#                                     "Hip-Knee" = "crp_hipknee_plot",
+#                                     "Knee-Ankle" = "crp_kneeankle_plot"))),
+#         
+#         # Show a plot of the generated distribution
+#         mainPanel(
+#             plotOutput("crp_hipknee_plot", width = "100%", height = "400px")
+#         )
+#     )
+# )
+# 
+# # Define server logic required to draw a plot3
+# server <- function(input, output) {
+#     
+#     #Fill in the spot created for a plot
+#     output$crp_hipknee_plot <- renderPlot({
+#         
+#         #Render a plot
+#         crp_hipknee_plot <- crp_hipknee %>% 
+#             group_by(id, trial) %>% 
+#             nest() %>% 
+#             mutate(crp_hipknee_plot = pmap(list(id, trial, data), 
+#                                            function(id, trial, data){
+#                                                data %>% 
+#                                                    ggplot(aes(x = frame, y = crp_hipknee)) +
+#                                                    geom_point() +
+#                                                    labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
+#                                                         subtitle = glue("Subject #{id}, Trial #{trial}"),
+#                                                         y = "CRP",
+#                                                         x = "% of Gait Cycle")
+#                                                
+#                                            }))
+#         
+#         crp_hipknee_plot$crp_hipknee_plot[[1]]
+#     })
+# }
+# 
+# # Run the application 
+# shinyApp(ui = ui, server = server)
+# 
+# 
+# 
+# # 4 Define UI for application that draws plot
+# ui <- fluidPage(
+#     
+#     # Application title
+#     titlePanel("Human Body Movement"),
+#     
+#     # Sidebar with a slider input for participants 
+#     sidebarLayout(
+#         sidebarPanel(
+#             selectInput("select", "Choose a movement", 
+#                         choices = c("Phase Portrait" = "phase_portrait",
+#                                     "Phase Angle" = "phase_angle_plot",
+#                                     "Hip-Knee" = "crp_hipknee_plot",
+#                                     "Knee-Ankle" = "crp_kneeankle_plot"))),
+#         
+#         # Show a plot of the generated distribution
+#         mainPanel(
+#             plotOutput("crp_kneeankle_plot", width = "100%", height = "400px")
+#         )
+#     )
+# )
+# 
+# # Define server logic required to draw a plot4
+# server <- function(input, output) {
+#     
+#     #Fill in the spot created for a plot
+#     output$crp_kneeankle_plot <- renderPlot({
+#         
+#         #Render a plot
+#         crp_kneeankle_plot <- crp_kneeankle %>% 
+#             group_by(id, trial) %>% 
+#             nest() %>% 
+#             mutate(crp_kneeankle_plot = pmap(list(id, trial, data), 
+#                                              function(id, trial, data){
+#                                                  data %>% 
+#                                                      ggplot(aes(x = frame, y = crp_kneeankle)) +
+#                                                      geom_point() +
+#                                                      labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
+#                                                           subtitle = glue("Subject #{id}, Trial #{trial}"),
+#                                                           y = "CRP",
+#                                                           x = "% of Gait Cycle")
+#                                                  
+#                                              }))
+#         
+#         crp_kneeankle_plot$crp_kneeankle_plot[[1]]
+#     })
+# }
+# 
+# # Run the application 
+# shinyApp(ui = ui, server = server)
+# 

@@ -1,0 +1,212 @@
+---
+title: "Human Body Movement"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    storyboard: true
+    theme: yeti
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library("rio")
+library("here")
+library("tidyverse")
+library("janitor")
+library("knitr")
+library("fs")
+library("glue")
+knitr::opts_chunk$set(warning = FALSE,
+                      message = FALSE,
+                      error = TRUE,
+                      fig.width = 6.5,
+                      fig.height = 8
+                      )
+theme_set(theme_minimal(base_size = 8))
+
+files <- dir_ls(here("data"), glob = "*.txt")
+batch <- map_df(files, import, setclass = "tbl_df", .id = "file")
+head(batch, 20L)
+
+##-----------function 01: tidy data, using 1 vector (measurement) as input-----##
+
+tidy_for_v <- function(v){
+  v <- v %>% 
+  mutate(var = value[2],
+         trial = value[1],
+         trial = str_replace_all(trial, ".c3d", ""),
+         trial = str_replace_all(trial, "(......)_", ""),
+         var = tolower(var)) %>%
+  rename(frame = V1) %>% 
+  slice(-1:-5) %>% 
+  dplyr::select(trial, var, frame, value) 
+}
+
+
+##------------function 02: tidy data, using 1 subject's data as input---------------##
+##------------note: this function has another function(tidy_for_v) inside--------##
+
+tidy_for_subject <- function(data){
+  data_from_one_subject <- data %>% 
+    gather(temvar, value, V2:V31) %>% 
+    group_by(temvar) %>% 
+    nest() %>% 
+    mutate(tidy = map(data, tidy_for_v)) %>% 
+    dplyr::select(-data) %>%
+    unnest() 
+}
+
+
+tidy <- batch %>% 
+  mutate(file = str_replace_all(file, here("data"), ""),
+         id = parse_number(file)) %>% 
+  select(id, everything(), -file) %>% 
+  group_by(id) %>%
+  nest() %>% 
+  mutate(new_data = map(data, tidy_for_subject)) %>% 
+  dplyr::select(-data) %>%
+  unnest() %>%
+  dplyr::select(-temvar) %>%
+  filter(!is.na(value)) %>% 
+  mutate(id = as.factor(id),
+         trial = as.factor(trial),
+         var = factor(var, levels = c("right_hip_angle", "right_hip_velocity", 
+                                      "right_knee_angle", "right_knee_velocity", 
+                                      "right_ankle_angle", "right_ankle_velocity"),
+                      labels = c("hip angle", "hip velocity",
+                                 "knee angle", "knee velocity",
+                                 "ankle angle", "ankle velocity")),
+         frame = as.factor(frame),
+         value = as.numeric(value))
+
+
+head(tidy, 20L)
+str(tidy)
+
+##----------function 03: to normalize angle---------##
+
+normalize_angle <- function(angle){
+  
+norm_angle_data <- angle %>% 
+  mutate(norm_angle = (2* (value - min(value))/(max(value) - min(value))) - 1,
+         max_angle = max(norm_angle),
+         min_angle = min(norm_angle)) %>% 
+  rename(raw_angle = value)
+}
+
+## may consider using NSE here, substitue "value"
+
+# group_means <- function(data, frame, angle) {
+#     frame <- enquo(frame) # Quote the inputs
+#     value <- enquo(angle)
+#     
+#     data %>% select(!!value) %>%
+#      mutate(norm_angle = (2* (value - min(value))/(max(value) - min(value))) - 1,
+#          max_angle = max(norm_angle),
+#          min_angle = min(norm_angle)) %>% 
+#     rename(raw_angle = value)
+#         
+# }
+
+
+##-------------function 04: to normalize velocity----------##
+
+normalize_velocity <- function(velocity){
+  
+norm_velocity_data <- velocity %>% 
+  mutate(norm_velocity = value /max(abs(value)),
+         max_velocity = max(norm_velocity),
+         min_velocity = min(norm_velocity)) %>% 
+  rename(raw_velocity = value)
+  
+}
+
+normalize <- tidy %>% 
+  separate(var, into = c("joint", "measure")) %>% 
+  group_by(id, trial, joint, measure) %>% 
+  nest() %>% 
+  spread(measure, data) %>% 
+  mutate(norm_angle = map(angle, normalize_angle),
+         norm_velocity = map(velocity, normalize_velocity)) %>% 
+  dplyr::select(-angle, -velocity) %>% 
+  unnest() %>% 
+  dplyr::select(-frame1)
+
+head(normalize)
+
+```
+
+Sidebar Title {.sidebar}
+============
+### About This Project
+
+Could add info about the project here (from the outline and readme you've already created). :) 
+
+# Visualization 1
+
+Info about this visual
+
+```{r visual1}
+phase_portrait <- normalize %>% 
+  group_by(id, trial, joint) %>% 
+  nest() %>% 
+  mutate(phase_portrait = pmap(list(id, trial, joint, data), 
+                                function(id, trial, joint, data){
+     data %>% ggplot(aes(norm_angle, norm_velocity)) +
+                           geom_point() +
+                           geom_path() +
+                           geom_point(data = filter(data, frame == 1), 
+                                     color = "red", size = 3) +
+                           geom_vline(xintercept = 0, color = "gray50") +
+                           geom_hline(yintercept = 0, color = "gray50") +
+                           labs(title = glue("Phase Portrait of {str_to_title(joint)} Joint"),
+                                subtitle = glue("Subjet #{id}, Trial #{trial}"),
+                                caption = "The red dot represents the start of cycle", 
+                                x = "Normalized Angle",
+                                y = "Normalized Velocity")}))
+
+
+phase_portrait$phase_portrait[[1]]
+```
+
+
+# Visualization 2 
+
+Info about this visual
+
+
+```{r visual2}
+phase_angle <- phase_portrait %>% 
+  mutate(phase_angle = map(data, function(data){
+    
+    tibble(frame = seq(1, 101, 1),
+           phase_angle = signal::unwrap((atan2(data$norm_velocity, data$norm_angle))) * 180 / pi)
+    
+    
+  })) %>% 
+  select(-phase_portrait, -data) %>% 
+  unnest() 
+
+
+
+
+phase_angle_plot <- phase_angle %>% 
+  group_by(id, trial, joint) %>% 
+  nest() %>% 
+  mutate(phase_angle_plot = pmap(list(id, trial, joint, data), 
+                                 function(id, trial, joint, data){
+    data %>%
+      ggplot(aes(x = frame, y = phase_angle)) +
+      geom_point() +
+      labs(title = glue("Phase Angle of {str_to_title(joint)} Joint During A Gait Cycle"),
+           subtitle = glue("Subjet #{id}, Trial #{trial}"),
+           y = "Phase Angle",
+           x = "% of Gait Cycle")
+  }))
+
+
+
+phase_angle_plot$phase_angle_plot[[1]] ## example plot
+```
+
