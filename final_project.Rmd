@@ -64,10 +64,11 @@ batch <- map_df(files, import, setclass = "tbl_df", .id = "file")
 head(batch, 20L)
 
 ```
+#Corrected some minor spelling error here
 
-The **bacth** has data from 5 subjects.  
+The **batch** has data from 5 subjects.  
 
-Each subject has upto 5 trials, representing 5 times of walking.  
+Each subject has up to 5 trials, representing 5 times of walking.  
 
 Each trial generates 6 outcome variables, including:  
 
