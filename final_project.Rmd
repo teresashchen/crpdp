@@ -23,6 +23,8 @@ knitr::opts_chunk$set(warning = FALSE,
                       )
 theme_set(theme_minimal(base_size = 8))
 
+
+### AE comment: Absolutely incredible work, you two! Your functions and plots are very clean and concise. My only major suggestion would be to add some more description in between code chunks to explain exactly what your data visualizations represent. That will be especially helpful to make your plots clear for people who don't know much about biomechanics. 
 ```
 
 ----------required packages----------
@@ -40,7 +42,7 @@ library("glue")
 
 ## What's this project about?
 
-The main purpose of the project is to calculate two outcome variables indicating human **joint-joint coordination** and **variability of coordination** during body movement. These two variables ared called *inter-joint continuous relative phase (CRP)* and *deviation phase (DP)*, respectily. They are widely used in the field of biomechanics, but to our knowlege there is no R function/package avalible designed for it. 
+The main purpose of the project is to calculate two outcome variables indicating human **joint-joint coordination** and **variability of coordination** during body movement. These two variables ared called *inter-joint continuous relative phase (CRP)* and *deviation phase (DP)*, respectively They are widely used in the field of biomechanics, but to our knowlege there is no R function/package availible designed for it. 
 
 
 ### Description of data
@@ -342,7 +344,7 @@ crp_hipknee_plot$crp_hipknee_plot[[1]] ## example plot
 
 ### Calculate knee-ankle CRP
 
-Similarly, knee-ankle CRP is obtained using the following eqution: 
+Similarly, knee-ankle CRP is obtained using the following equation: 
 
  $$CRP_{knee\cdot ankle}=\varphi_{knee} - \varphi_{ankle}$$
   
