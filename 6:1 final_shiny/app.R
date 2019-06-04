@@ -8,10 +8,8 @@ library(fs)
 library(signal)
 library(glue) 
 library(colorblindr) 
-library(DT) 
+library(DT)
 library(shiny)
-
-theme_set(theme_minimal(15))
 
 files <- dir_ls(here("data"), glob = "*.txt")
 batch <- map_df(files, import, setclass = "tbl_df", .id = "file")
@@ -92,8 +90,6 @@ normalize <- tidy %>%
     dplyr::select(-frame1) %>% 
     mutate(joint = factor(joint, levels = c("ankle", "knee", "hip")))
 
-
-
 phase_portrait <- normalize %>% 
     group_by(id) %>% 
     nest() %>% 
@@ -150,7 +146,6 @@ crp_hipknee <- phase_angle %>%
     spread(joint, phase_angle) %>% 
     mutate(crp_hipknee = hip - knee)
 
-
 crp_hipknee_plot <- crp_hipknee %>% 
     group_by(id) %>% 
     nest() %>% 
@@ -190,6 +185,7 @@ crp_kneeankle_plot <- crp_kneeankle %>%
                                          
                                      }))
 
+
 dp <- crp_hipknee %>% 
     left_join(crp_kneeankle) %>% 
     group_by(id, frame) %>% 
@@ -220,7 +216,7 @@ ui <- fluidPage(
     sidebarPanel(
             
     # Input: Select the random distribution type ----
-    radioButtons("id", "Choose a Particpant:",
+    selectInput("id", "Choose a Particpant:",
                          c("Participant1" = "1",
                            "Participant2" = "2",
                            "Participant3" = "3",
@@ -248,21 +244,20 @@ ui <- fluidPage(
     )
 )
 
-# Define server logic for random distribution app ----
+# Define server logic for participant----
 server <- function(input, output) {
     
-    # Reactive expression to generate the requested distribution ----
+    # Reactive expression to generate the requested participant ----
     # This is called whenever the inputs change. The output functions
     # defined below then use the value computed from this expression
     d <- reactive({
-        dist <- switch(input$dist,
+        id <- switch(input$id,
                        phase_portrait = rphase_portrait,
                        phase_angle_plot = rphase_angle_plot,
                        crp_hipknee_plot = rcrp_hipknee_plot,
-                       crp_kneeankle_plot = rcrp_kneeankle_plot,
-                       rnorm)
+                       crp_kneeankle_plot = rcrp_kneeankle_plot)
         
-        dist(input$n)
+        id(input$n)
     })}
     
     # Generate a plot of phase_portrait ----
@@ -271,7 +266,7 @@ server <- function(input, output) {
     # both tracked, and all expressions are called in the sequence
     # implied by the dependency graph.
     output$plot <- renderPlot({
-        dist <- input$dist
+        id <- input$id
         n <- input$n
         
         phase_portrait <- normalize %>% 
@@ -302,7 +297,7 @@ server <- function(input, output) {
     # both tracked, and all expressions are called in the sequence
     # implied by the dependency graph.
     output$plot <- renderPlot({
-        dist <- input$dist
+        id <- input$id
         n <- input$n
         
         phase_angle_plot <- phase_angle %>% 
@@ -330,7 +325,7 @@ server <- function(input, output) {
         # both tracked, and all expressions are called in the sequence
         # implied by the dependency graph.
         output$plot <- renderPlot({
-            dist <- input$dist
+            id <- input$id
             n <- input$n
             
             crp_hipknee_plot <- crp_hipknee %>% 
@@ -357,7 +352,7 @@ server <- function(input, output) {
             # both tracked, and all expressions are called in the sequence
             # implied by the dependency graph.
             output$plot <- renderPlot({
-                dist <- input$dist
+                id <- input$id
                 n <- input$n
             
                 crp_kneeankle_plot <- crp_kneeankle %>% 
