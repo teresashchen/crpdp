@@ -218,14 +218,12 @@ ui <- fluidPage(
     selectInput("id", "Choose a Particpant:",
                          c("Participant1" = "1",
                            "Participant2" = "2",
-                           "Participant3" = "3",
-                           "Participant4" = "4",
                            "Participant5" = "5",
                            "Participant6" = "6",
                            "Participant7" = "7")),
             
  hr(),
- helpText("The main purpose of the project is to calculate two outcome variables indicating human joint-joint coordination and variability of coordination during body movement. These two variables ared called inter-joint continuous relative phase (CRP) and deviation phase (DP), respectily.")
+ helpText("The main purpose of the project is to calculate two outcome variables indicating human joint-joint coordination and variability of coordination during body movement. These two variables ared called inter-joint continuous relative phase (CRP) and deviation phase (DP), respectively.")
  ),
         
     # Main panel for displaying outputs ----
@@ -254,8 +252,8 @@ server <- function(input, output) {
                        phase_angle_plot = rphase_angle_plot,
                        crp_hipknee_plot = rcrp_hipknee_plot,
                        crp_kneeankle_plot = rcrp_kneeankle_plot)
-        
-        id(input$n)
+        # 
+        # id(input$id)
     })
     
     # Generate a plot of phase_portrait ----
@@ -267,27 +265,33 @@ server <- function(input, output) {
         id <- input$id
         #n <- input$n
         
-        normalize %>% 
+        phase_portrait %>% 
             dplyr::filter(id == input$id) %>% 
-            #group_by(id) %>% 
-            #nest() %>% 
-            #mutate(phase_portrait = map2(id, data, function(id, data){
-                
-                #data %>% 
-                    ggplot(aes(norm_angle, norm_velocity, color = trial)) +
-                    geom_point() +
-                    geom_path() +
-                    geom_point(data = dplyr::filter(normalize, frame == 1), 
-                               color = "#000000", size = 3) +
-                    geom_vline(xintercept = 0, color = "gray50") +
-                    geom_hline(yintercept = 0, color = "gray50") +
-                    facet_wrap(~joint) +
-                    scale_color_OkabeIto() +
-                    labs(title = "Phase Portrait of Joint",
-                         subtitle = glue("Subjet #{input$id}"),
-                         caption = "The red dot represents the start of cycle", 
-                         x = "Normalized Angle",
-                         y = "Normalized Velocity")
+            pull(phase_portrait)
+        
+        #phase_portrait$phase_portrait[[1]]
+        
+        # normalize %>% 
+        #     dplyr::filter(id == input$id) %>% 
+        #     #group_by(id) %>% 
+        #     #nest() %>% 
+        #     #mutate(phase_portrait = map2(id, data, function(id, data){
+        #         
+        #         #data %>% 
+        #             ggplot(aes(norm_angle, norm_velocity, color = trial)) +
+        #             geom_point() +
+        #             geom_path() +
+        #             geom_point(data = dplyr::filter(normalize, frame == 1), 
+        #                        color = "#000000", size = 3) +
+        #             geom_vline(xintercept = 0, color = "gray50") +
+        #             geom_hline(yintercept = 0, color = "gray50") +
+        #             facet_wrap(~joint) +
+        #             scale_color_OkabeIto() +
+        #             labs(title = "Phase Portrait of Joint",
+        #                  subtitle = glue("Subjet #{input$id}"),
+        #                  caption = "The red dot represents the start of cycle", 
+        #                  x = "Normalized Angle",
+        #                  y = "Normalized Velocity")
                     })
     #)
         #phase_portrait$phase_portrait[[1]]
@@ -302,29 +306,30 @@ server <- function(input, output) {
         id <- input$id
         #n <- input$n
         
-        normalize %>% 
+        # normalize %>% 
+        phase_angle_plot %>%
             dplyr::filter(id == input$id) %>%
+            pull(phase_angle_plot)
         
-        #phase_angle_plot <- phase_angle %>% 
-            #group_by(id) %>% 
-            #nest() %>% 
-            #mutate(phase_angle_plot = map2(id, data, function(id, data){
-                
-                #data %>%
-                    ggplot(aes(x = frame, y = phase_angle, color = trial)) +
-                    geom_point() +
-                    scale_color_OkabeIto() +
-                    facet_wrap(~joint) +
-                    labs(title = "Phase Angle of Joint During A Gait Cycle",
-                         subtitle = glue("Subjet #{id}"),
-                         y = "Phase Angle",
-                         x = "% of Gait Cycle")
-                         })
+         # phase_angle_plot <- phase_angle %>%
+         #      group_by(id) %>%
+         #      nest() %>%
+         #      mutate(phase_angle_plot = map2(id, data, function(id, data){
+         # 
+         #         data %>%
+                    # ggplot(aes(x = frame, y = phase_angle, color = trial)) +
+                    # geom_point() +
+                    # scale_color_OkabeIto() +
+                    # facet_wrap(~joint) +
+                    # labs(title = "Phase Angle of Joint During A Gait Cycle",
+                    #      subtitle = glue("Subjet #{id}"),
+                    #      y = "Phase Angle",
+                    #      x = "% of Gait Cycle")
+                    #      })
                 #phase_angle_plot$phase_angle_plot[[1]]
-            #}))
+            })
     
 
-        
         # Generate a plot of crp_hipknee_plot ----
         # Also uses the inputs to build the plot label. Note that the
         # dependencies on the inputs and the data reactive expression are
@@ -333,9 +338,13 @@ server <- function(input, output) {
         output$crp_hipknee_plot <- renderPlot({
             id <- input$id
             #n <- input$n
+                
+            # normalize %>% 
+            #     dplyr::filter(id == input$id) %>% 
             
-            normalize %>% 
+            crp_hipknee_plot %>% 
                 dplyr::filter(id == input$id) %>% 
+                pull(crp_hipknee_plot)
             
             # crp_hipknee_plot <- crp_hipknee %>% 
             #     group_by(id) %>% 
@@ -343,14 +352,14 @@ server <- function(input, output) {
             #     mutate(crp_hipknee_plot = pmap(list(id, data), 
             #                                    function(id, data){
             #    data %>% 
-               ggplot(aes(x = frame, y = crp_hipknee, color = trial)) +
-                      geom_point() +
-                      geom_path() +                               
-                      scale_color_OkabeIto() +                               
-                      labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
-                         subtitle = glue("Subject #{id}"),
-                         y = "CRP",
-                         x = "% of Gait Cycle")
+               # ggplot(aes(x = frame, y = crp_hipknee, color = trial)) +
+               #        geom_point() +
+               #        geom_path() +                               
+               #        scale_color_OkabeIto() +                               
+               #        labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
+               #           subtitle = glue("Subject #{id}"),
+               #           y = "CRP",
+               #           x = "% of Gait Cycle")
                                                    #crp_hipknee_plot$crp_hipknee_plot[[1]]
                                               # }))
        
@@ -365,8 +374,12 @@ server <- function(input, output) {
                 id <- input$id
                 #n <- input$n
             
-                normalize %>% 
+                # normalize %>% 
+                #     dplyr::filter(id == input$id) %>% 
+                
+                crp_kneeankle_plot %>% 
                     dplyr::filter(id == input$id) %>% 
+                    pull(crp_kneeankle_plot)
                 
                 #crp_kneeankle_plot <- crp_kneeankle %>% 
                     #group_by(id) %>% 
@@ -374,14 +387,14 @@ server <- function(input, output) {
                     #mutate(crp_kneeankle_plot = pmap(list(id, data), 
                      #function(id, data){
                      #data %>% 
-                    ggplot(aes(x = frame, y = crp_kneeankle, color = trial)) +
-                              geom_point() +
-                              geom_path() +                                 
-                              scale_color_OkabeIto() +                                 
-                              labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
-                                   subtitle = glue("Subject #{id}"),
-                                   y = "CRP",
-                                   x = "% of Gait Cycle")
+                    # ggplot(aes(x = frame, y = crp_kneeankle, color = trial)) +
+                    #           geom_point() +
+                    #           geom_path() +                                 
+                    #           scale_color_OkabeIto() +                                 
+                    #           labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
+                    #                subtitle = glue("Subject #{id}"),
+                    #                y = "CRP",
+                    #                x = "% of Gait Cycle")
                                                          #crp_kneeankle_plot$crp_kneeankle_plot[[1]] 
                                                      #}))
             })
