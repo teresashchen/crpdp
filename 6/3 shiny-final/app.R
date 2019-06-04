@@ -8,10 +8,8 @@ library(fs)
 library(signal)
 library(glue) 
 library(colorblindr) 
-library(DT) 
+library(DT)
 library(shiny)
-
-theme_set(theme_minimal(15))
 
 files <- dir_ls(here("data"), glob = "*.txt")
 batch <- map_df(files, import, setclass = "tbl_df", .id = "file")
@@ -92,8 +90,6 @@ normalize <- tidy %>%
     dplyr::select(-frame1) %>% 
     mutate(joint = factor(joint, levels = c("ankle", "knee", "hip")))
 
-
-
 phase_portrait <- normalize %>% 
     group_by(id) %>% 
     nest() %>% 
@@ -150,7 +146,6 @@ crp_hipknee <- phase_angle %>%
     spread(joint, phase_angle) %>% 
     mutate(crp_hipknee = hip - knee)
 
-
 crp_hipknee_plot <- crp_hipknee %>% 
     group_by(id) %>% 
     nest() %>% 
@@ -190,6 +185,7 @@ crp_kneeankle_plot <- crp_kneeankle %>%
                                          
                                      }))
 
+
 dp <- crp_hipknee %>% 
     left_join(crp_kneeankle) %>% 
     group_by(id, frame) %>% 
@@ -207,73 +203,36 @@ dp %>%
 
 ###############################################
 
-# Define UI for random distribution app ----
+# Define UI for application that draws a histogram
 ui <- fluidPage(
-    
-    # App title ----
-    titlePanel("Human Body Movement"),
-    
-    # Sidebar layout with input and output definitions ----
-    sidebarLayout(
-        
-    # Sidebar panel for inputs ----
-    sidebarPanel(
-            
-    # Input: Select the random distribution type ----
-    radioButtons("id", "Choose a Particpant:",
-                         c("Participant1" = "1",
-                           "Participant2" = "2",
-                           "Participant3" = "3",
-                           "Participant4" = "4",
-                           "Participant5" = "5",
-                           "Participant6" = "6",
-                           "Participant7" = "7")),
-            
- hr(),
- helpText("The main purpose of the project is to calculate two outcome variables indicating human joint-joint coordination and variability of coordination during body movement. These two variables ared called inter-joint continuous relative phase (CRP) and deviation phase (DP), respectily.")
- ),
-        
-    # Main panel for displaying outputs ----
-    mainPanel(
-        
-    # Output: Tabset w/ different movements ----
-    tabsetPanel(type = "tabs",
-        tabPanel("Phase Portrait", plotOutput("phase_portrait")),
-        tabPanel("Phase Angle Plot", plotOutput("phase_angle_plot")),
-        tabPanel("CRP Hip-Knee Plot", plotOutput("crp_hipknee_plot")),
-        tabPanel("CRP Knee-Ankle Plot", plotOutput("crp_kneeankle_plot"))
-    )
-        
-    )
-    )
-)
 
-# Define server logic for random distribution app ----
+    # Application title
+    titlePanel("Human Body Movement"),
+
+    # Sidebar with a slider input for number of bins 
+    sidebarLayout(
+        sidebarPanel(
+            selectInput("id", "Choose a Participant:",
+                        c("Phase Portrait" = "phase_portrait",
+                          "Phase Ankle Plot" = "phase_angle_plot",
+                          "Hip-Knee CRP Plot" = "crp_hipknee_plot",
+                          "Knee-Ankle CRP Plot" = "crp_kneeankle_plot"
+                          ),
+        hr(),
+        helpText("The main purpose of the project is to calculate two outcome variables indicating human joint-joint coordination and variability of coordination during body movement. These two variables ared called inter-joint continuous relative phase (CRP) and deviation phase (DP), respectily.")
+            ),
+
+        # Show a plot of the generated distribution
+        mainPanel(
+           plotOutput("phase_portrait")
+        )
+    )
+))
+
+# Define server logic required to draw a histogram
 server <- function(input, output) {
-    
-    # Reactive expression to generate the requested distribution ----
-    # This is called whenever the inputs change. The output functions
-    # defined below then use the value computed from this expression
-    d <- reactive({
-        dist <- switch(input$dist,
-                       phase_portrait = rphase_portrait,
-                       phase_angle_plot = rphase_angle_plot,
-                       crp_hipknee_plot = rcrp_hipknee_plot,
-                       crp_kneeankle_plot = rcrp_kneeankle_plot,
-                       rnorm)
-        
-        dist(input$n)
-    })}
-    
-    # Generate a plot of phase_portrait ----
-    # Also uses the inputs to build the plot label. Note that the
-    # dependencies on the inputs and the data reactive expression are
-    # both tracked, and all expressions are called in the sequence
-    # implied by the dependency graph.
-    output$plot <- renderPlot({
-        dist <- input$dist
-        n <- input$n
-        
+
+    output$phase_portrait <- renderPlot({
         phase_portrait <- normalize %>% 
             group_by(id) %>% 
             nest() %>% 
@@ -295,109 +254,7 @@ server <- function(input, output) {
                          y = "Normalized Velocity")}))
         phase_portrait$phase_portrait[[1]]
     })
+}
 
-    # Generate a plot of phase_angle_plot ----
-    # Also uses the inputs to build the plot label. Note that the
-    # dependencies on the inputs and the data reactive expression are
-    # both tracked, and all expressions are called in the sequence
-    # implied by the dependency graph.
-    output$plot <- renderPlot({
-        dist <- input$dist
-        n <- input$n
-        
-        phase_angle_plot <- phase_angle %>% 
-            group_by(id) %>% 
-            nest() %>% 
-            mutate(phase_angle_plot = map2(id, data, function(id, data){
-                
-                data %>%
-                    ggplot(aes(x = frame, y = phase_angle, color = trial)) +
-                    geom_point() +
-                    scale_color_OkabeIto() +
-                    facet_wrap(~joint) +
-                    labs(title = "Phase Angle of Joint During A Gait Cycle",
-                         subtitle = glue("Subjet #{id}"),
-                         y = "Phase Angle",
-                         x = "% of Gait Cycle")
-                phase_angle_plot$phase_angle_plot[[1]]
-            }))
-        })
-
-        
-        # Generate a plot of crp_hipknee_plot ----
-        # Also uses the inputs to build the plot label. Note that the
-        # dependencies on the inputs and the data reactive expression are
-        # both tracked, and all expressions are called in the sequence
-        # implied by the dependency graph.
-        output$plot <- renderPlot({
-            dist <- input$dist
-            n <- input$n
-            
-            crp_hipknee_plot <- crp_hipknee %>% 
-                group_by(id) %>% 
-                nest() %>% 
-                mutate(crp_hipknee_plot = pmap(list(id, data), 
-                                               function(id, data){
-                                                   data %>% 
-                                                       ggplot(aes(x = frame, y = crp_hipknee, color = trial)) +
-                                                       geom_point() +
-                                                       geom_path() +                               
-                                                       scale_color_OkabeIto() +                               
-                                                       labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
-                                                            subtitle = glue("Subject #{id}"),
-                                                            y = "CRP",
-                                                            x = "% of Gait Cycle")
-                                                   crp_hipknee_plot$crp_hipknee_plot[[1]]
-                                               }))
-        })
-            
-            # Generate a plot of crp_kneeankle_plot ----
-            # Also uses the inputs to build the plot label. Note that the
-            # dependencies on the inputs and the data reactive expression are
-            # both tracked, and all expressions are called in the sequence
-            # implied by the dependency graph.
-            output$plot <- renderPlot({
-                dist <- input$dist
-                n <- input$n
-            
-                crp_kneeankle_plot <- crp_kneeankle %>% 
-                    group_by(id) %>% 
-                    nest() %>% 
-                    mutate(crp_kneeankle_plot = pmap(list(id, data), 
-                                                     function(id, data){
-                                                         data %>% 
-                                                             ggplot(aes(x = frame, y = crp_kneeankle, color = trial)) +
-                                                             geom_point() +
-                                                             geom_path() +                                 
-                                                             scale_color_OkabeIto() +                                 
-                                                             labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
-                                                                  subtitle = glue("Subject #{id}"),
-                                                                  y = "CRP",
-                                                                  x = "% of Gait Cycle")
-                                                         crp_kneeankle_plot$crp_kneeankle_plot[[1]] 
-                                                     }))
-            })
-                
-
-   # Generate an HTML table view of the data ----
-                output$table <- renderTable({
-                    dp <- crp_hipknee %>% 
-                        left_join(crp_kneeankle) %>% 
-                        group_by(id, frame) %>% 
-                        summarise(crp_hipknee_sd = sd(crp_hipknee),
-                                  crp_kneeankle_sd = sd(crp_kneeankle)) %>% 
-                        group_by(id) %>% 
-                        summarise(dp_hipknee = mean(crp_hipknee_sd),
-                                  dp_kneeankle = mean(crp_kneeankle_sd))
-                    
-                    dp %>% 
-                        mutate(`Deviation Phase:Hip-Knee` = dp_hipknee,
-                               `Deviation Phase:Knee-Ankle` = dp_kneeankle) %>% 
-                        select(-dp_hipknee, -dp_kneeankle) %>% 
-                        DT::datatable()
-                })
-                
-
-   
-   # Run the app ----
+# Run the application 
 shinyApp(ui = ui, server = server)
