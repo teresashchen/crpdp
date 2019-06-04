@@ -194,12 +194,6 @@ dp <- crp_hipknee %>%
     summarise(dp_hipknee = mean(crp_hipknee_sd),
               dp_kneeankle = mean(crp_kneeankle_sd))
 
-dp %>% 
-    mutate(`Deviation Phase:Hip-Knee` = dp_hipknee,
-           `Deviation Phase:Knee-Ankle` = dp_kneeankle) %>% 
-    select(-dp_hipknee, -dp_kneeankle) %>% 
-    DT::datatable()
-
 ###############################################
 
 # Define UI for random distribution app ----
@@ -235,10 +229,14 @@ ui <- fluidPage(
             tabPanel("Phase Angle Plot", plotOutput("phase_angle_plot")), #phase_angle_plot
             tabPanel("CRP Hip-Knee Plot", plotOutput("crp_hipknee_plot")), #crp_hipknee_plot
             tabPanel("CRP Knee-Ankle Plot", plotOutput("crp_kneeankle_plot")) #crp_kneeankle_plot 
-            )
+            ),
+    dataTableOutput("tbl")
         )
+         
     )
 )
+
+    
 
 # Define server logic for participant----
 server <- function(input, output) {
@@ -401,15 +399,8 @@ server <- function(input, output) {
                 
 
    # Generate an HTML table view of the data ----
-                output$table <- renderTable({
-                    dp <- crp_hipknee %>% 
-                        left_join(crp_kneeankle) %>% 
-                        group_by(id, frame) %>% 
-                        summarise(crp_hipknee_sd = sd(crp_hipknee),
-                                  crp_kneeankle_sd = sd(crp_kneeankle)) %>% 
-                        group_by(id) %>% 
-                        summarise(dp_hipknee = mean(crp_hipknee_sd),
-                                  dp_kneeankle = mean(crp_kneeankle_sd))
+                output$tbl <- renderDataTable({
+     
                     
                     dp %>% 
                         mutate(`Deviation Phase:Hip-Knee` = dp_hipknee,
