@@ -47,7 +47,7 @@ tidy <- batch %>%
     dplyr::select(-data) %>%
     unnest() %>%
     dplyr::select(-temvar) %>%
-    filter(!is.na(value)) %>% 
+    #filter(!is.na(value)) %>% 
     mutate(id = as.factor(id),
            trial = as.factor(trial),
            var = factor(var, levels = c("right_hip_angle", "right_hip_velocity", 
