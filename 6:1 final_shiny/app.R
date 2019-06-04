@@ -1,4 +1,3 @@
-
 library(rio)
 library(here)
 library(tidyverse)
@@ -47,7 +46,7 @@ tidy <- batch %>%
     dplyr::select(-data) %>%
     unnest() %>%
     dplyr::select(-temvar) %>%
-    #filter(!is.na(value)) %>% 
+    dplyr::filter(!is.na(value)) %>% 
     mutate(id = as.factor(id),
            trial = as.factor(trial),
            var = factor(var, levels = c("right_hip_angle", "right_hip_velocity", 
@@ -98,7 +97,7 @@ phase_portrait <- normalize %>%
         data %>% ggplot(aes(norm_angle, norm_velocity, color = trial)) +
             geom_point() +
             geom_path() +
-            geom_point(data = filter(data, frame == 1), 
+            geom_point(data = dplyr::filter(data, frame == 1), 
                        color = "#000000", size = 3) +
             geom_vline(xintercept = 0, color = "gray50") +
             geom_hline(yintercept = 0, color = "gray50") +
@@ -142,7 +141,7 @@ phase_angle_plot <- phase_angle %>%
     }))
 
 crp_hipknee <- phase_angle %>% 
-    filter(joint == "hip" | joint == "knee") %>% 
+    dplyr::filter(joint == "hip" | joint == "knee") %>% 
     spread(joint, phase_angle) %>% 
     mutate(crp_hipknee = hip - knee)
 
@@ -164,7 +163,7 @@ crp_hipknee_plot <- crp_hipknee %>%
                                    }))
 
 crp_kneeankle <- phase_angle %>% 
-    filter(joint == "knee" | joint == "ankle") %>% 
+    dplyr::filter(joint == "knee" | joint == "ankle") %>% 
     spread(joint, phase_angle) %>% 
     mutate(crp_kneeankle = knee - ankle)
 
@@ -233,14 +232,13 @@ ui <- fluidPage(
     mainPanel(
         
     # Output: Tabset w/ different movements ----
-    tabsetPanel(type = "tabs",
-        tabPanel("Phase Portrait", plotOutput("phase_portrait")),
-        tabPanel("Phase Angle Plot", plotOutput("phase_angle_plot")),
-        tabPanel("CRP Hip-Knee Plot", plotOutput("crp_hipknee_plot")),
-        tabPanel("CRP Knee-Ankle Plot", plotOutput("crp_kneeankle_plot"))
-    )
-        
-    )
+        tabsetPanel(type = "tabs",
+            tabPanel("Phase Portrait", plotOutput("phase_portrait")), #phase_portrait
+            tabPanel("Phase Angle Plot", plotOutput("phase_angle_plot")), #phase_angle_plot
+            tabPanel("CRP Hip-Knee Plot", plotOutput("crp_hipknee_plot")), #crp_hipknee_plot
+            tabPanel("CRP Knee-Ankle Plot", plotOutput("crp_kneeankle_plot")) #crp_kneeankle_plot 
+            )
+        )
     )
 )
 
@@ -258,54 +256,61 @@ server <- function(input, output) {
                        crp_kneeankle_plot = rcrp_kneeankle_plot)
         
         id(input$n)
-    })}
+    })
     
     # Generate a plot of phase_portrait ----
     # Also uses the inputs to build the plot label. Note that the
     # dependencies on the inputs and the data reactive expression are
     # both tracked, and all expressions are called in the sequence
     # implied by the dependency graph.
-    output$plot <- renderPlot({
+    output$phase_portrait <- renderPlot({
         id <- input$id
-        n <- input$n
+        #n <- input$n
         
-        phase_portrait <- normalize %>% 
-            group_by(id) %>% 
-            nest() %>% 
-            mutate(phase_portrait = map2(id, data, function(id, data){
+        normalize %>% 
+            dplyr::filter(id == input$id) %>% 
+            #group_by(id) %>% 
+            #nest() %>% 
+            #mutate(phase_portrait = map2(id, data, function(id, data){
                 
-                data %>% ggplot(aes(norm_angle, norm_velocity, color = trial)) +
+                #data %>% 
+                    ggplot(aes(norm_angle, norm_velocity, color = trial)) +
                     geom_point() +
                     geom_path() +
-                    geom_point(data = filter(data, frame == 1), 
+                    geom_point(data = dplyr::filter(normalize, frame == 1), 
                                color = "#000000", size = 3) +
                     geom_vline(xintercept = 0, color = "gray50") +
                     geom_hline(yintercept = 0, color = "gray50") +
                     facet_wrap(~joint) +
                     scale_color_OkabeIto() +
                     labs(title = "Phase Portrait of Joint",
-                         subtitle = glue("Subjet #{id}"),
+                         subtitle = glue("Subjet #{input$id}"),
                          caption = "The red dot represents the start of cycle", 
                          x = "Normalized Angle",
-                         y = "Normalized Velocity")}))
-        phase_portrait$phase_portrait[[1]]
-    })
+                         y = "Normalized Velocity")
+                    })
+    #)
+        #phase_portrait$phase_portrait[[1]]
+   # })
 
     # Generate a plot of phase_angle_plot ----
     # Also uses the inputs to build the plot label. Note that the
     # dependencies on the inputs and the data reactive expression are
     # both tracked, and all expressions are called in the sequence
     # implied by the dependency graph.
-    output$plot <- renderPlot({
+    output$phase_angle_plot <- renderPlot({
         id <- input$id
-        n <- input$n
+        #n <- input$n
         
-        phase_angle_plot <- phase_angle %>% 
-            group_by(id) %>% 
-            nest() %>% 
-            mutate(phase_angle_plot = map2(id, data, function(id, data){
+        normalize %>% 
+            dplyr::filter(id == input$id) %>%
+        
+        #phase_angle_plot <- phase_angle %>% 
+            #group_by(id) %>% 
+            #nest() %>% 
+            #mutate(phase_angle_plot = map2(id, data, function(id, data){
                 
-                data %>%
+                #data %>%
                     ggplot(aes(x = frame, y = phase_angle, color = trial)) +
                     geom_point() +
                     scale_color_OkabeIto() +
@@ -314,9 +319,10 @@ server <- function(input, output) {
                          subtitle = glue("Subjet #{id}"),
                          y = "Phase Angle",
                          x = "% of Gait Cycle")
-                phase_angle_plot$phase_angle_plot[[1]]
-            }))
-        })
+                         })
+                #phase_angle_plot$phase_angle_plot[[1]]
+            #}))
+    
 
         
         # Generate a plot of crp_hipknee_plot ----
@@ -324,26 +330,30 @@ server <- function(input, output) {
         # dependencies on the inputs and the data reactive expression are
         # both tracked, and all expressions are called in the sequence
         # implied by the dependency graph.
-        output$plot <- renderPlot({
+        output$crp_hipknee_plot <- renderPlot({
             id <- input$id
-            n <- input$n
+            #n <- input$n
             
-            crp_hipknee_plot <- crp_hipknee %>% 
-                group_by(id) %>% 
-                nest() %>% 
-                mutate(crp_hipknee_plot = pmap(list(id, data), 
-                                               function(id, data){
-                                                   data %>% 
-                                                       ggplot(aes(x = frame, y = crp_hipknee, color = trial)) +
-                                                       geom_point() +
-                                                       geom_path() +                               
-                                                       scale_color_OkabeIto() +                               
-                                                       labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
-                                                            subtitle = glue("Subject #{id}"),
-                                                            y = "CRP",
-                                                            x = "% of Gait Cycle")
-                                                   crp_hipknee_plot$crp_hipknee_plot[[1]]
-                                               }))
+            normalize %>% 
+                dplyr::filter(id == input$id) %>% 
+            
+            # crp_hipknee_plot <- crp_hipknee %>% 
+            #     group_by(id) %>% 
+            #     nest() %>% 
+            #     mutate(crp_hipknee_plot = pmap(list(id, data), 
+            #                                    function(id, data){
+            #    data %>% 
+               ggplot(aes(x = frame, y = crp_hipknee, color = trial)) +
+                      geom_point() +
+                      geom_path() +                               
+                      scale_color_OkabeIto() +                               
+                      labs(title = "Hip-Knee Continuous Relative Phase During A Gait Cycle",
+                         subtitle = glue("Subject #{id}"),
+                         y = "CRP",
+                         x = "% of Gait Cycle")
+                                                   #crp_hipknee_plot$crp_hipknee_plot[[1]]
+                                              # }))
+       
         })
             
             # Generate a plot of crp_kneeankle_plot ----
@@ -351,26 +361,29 @@ server <- function(input, output) {
             # dependencies on the inputs and the data reactive expression are
             # both tracked, and all expressions are called in the sequence
             # implied by the dependency graph.
-            output$plot <- renderPlot({
+            output$crp_kneeankle_plot <- renderPlot({
                 id <- input$id
-                n <- input$n
+                #n <- input$n
             
-                crp_kneeankle_plot <- crp_kneeankle %>% 
-                    group_by(id) %>% 
-                    nest() %>% 
-                    mutate(crp_kneeankle_plot = pmap(list(id, data), 
-                                                     function(id, data){
-                                                         data %>% 
-                                                             ggplot(aes(x = frame, y = crp_kneeankle, color = trial)) +
-                                                             geom_point() +
-                                                             geom_path() +                                 
-                                                             scale_color_OkabeIto() +                                 
-                                                             labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
-                                                                  subtitle = glue("Subject #{id}"),
-                                                                  y = "CRP",
-                                                                  x = "% of Gait Cycle")
-                                                         crp_kneeankle_plot$crp_kneeankle_plot[[1]] 
-                                                     }))
+                normalize %>% 
+                    dplyr::filter(id == input$id) %>% 
+                
+                #crp_kneeankle_plot <- crp_kneeankle %>% 
+                    #group_by(id) %>% 
+                    #nest() %>% 
+                    #mutate(crp_kneeankle_plot = pmap(list(id, data), 
+                     #function(id, data){
+                     #data %>% 
+                    ggplot(aes(x = frame, y = crp_kneeankle, color = trial)) +
+                              geom_point() +
+                              geom_path() +                                 
+                              scale_color_OkabeIto() +                                 
+                              labs(title = "Knee-Ankle Continuous Relative Phase During A Gait Cycle",
+                                   subtitle = glue("Subject #{id}"),
+                                   y = "CRP",
+                                   x = "% of Gait Cycle")
+                                                         #crp_kneeankle_plot$crp_kneeankle_plot[[1]] 
+                                                     #}))
             })
                 
 
@@ -392,7 +405,7 @@ server <- function(input, output) {
                         DT::datatable()
                 })
                 
-
+}
    
    # Run the app ----
 shinyApp(ui = ui, server = server)
