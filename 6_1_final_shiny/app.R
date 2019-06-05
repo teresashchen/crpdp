@@ -114,7 +114,7 @@ phase_portrait <- normalize %>%
             scale_color_OkabeIto() +
             labs(title = "Phase Portrait of Joint",
                  subtitle = glue("Subjet #{id}"),
-                 caption = "The red dot represents the start of cycle", 
+                 caption = "The black dot represents the start of cycle", 
                  x = "Normalized Angle",
                  y = "Normalized Velocity")}))
 
@@ -209,7 +209,7 @@ dp <- crp_hipknee %>%
 ui <- fluidPage(
     
     # App title ----
-    titlePanel("Human Body Movement"),
+    titlePanel("Inter-Joint Coordination"),
     
     # Sidebar layout with input and output definitions ----
     sidebarLayout(
@@ -414,8 +414,10 @@ server <- function(input, output) {
                     dp %>% 
                         mutate(`Deviation Phase:Hip-Knee` = dp_hipknee,
                                `Deviation Phase:Knee-Ankle` = dp_kneeankle) %>% 
+                        rename(Participant = id) %>% 
                         select(-dp_hipknee, -dp_kneeankle) %>% 
-                        DT::datatable()
+                        DT::datatable() %>% 
+                        formatRound(columns=c('Deviation Phase:Hip-Knee', 'Deviation Phase:Knee-Ankle'), digits=3)
                 })
                 
 }
