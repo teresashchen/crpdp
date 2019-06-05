@@ -18,6 +18,7 @@ knitr::opts_chunk$set(warning = FALSE,
 )
 theme_set(theme_minimal(base_size = 16))
 
+
 files <- dir_ls(here("data"), glob = "*.txt")
 batch <- map_df(files, import, setclass = "tbl_df", .id = "file")
 
