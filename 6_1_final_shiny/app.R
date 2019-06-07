@@ -9,6 +9,8 @@ library(glue)
 library(colorblindr) 
 library(DT)
 library(shiny)
+library(rsconnect)
+
 
 knitr::opts_chunk$set(warning = FALSE,
                       message = FALSE,
