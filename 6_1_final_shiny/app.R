@@ -234,20 +234,20 @@ ui <- fluidPage(
           These two variables ared called inter-joint continuous relative phase (CRP) and deviation phase (DP), 
           respectively.", br(), 
           
-          "--------------------------------------------------------------------------------------------", br(),
+          "-----", br(),
          
           "We designed This shiny app 1) to demonstrate the profile of inter-joint coordination as well as  
           the steps leading to CRP and DP and 2) to aid in effectiveness during debugging process by visualizing 
           each calculation step.", br(), 
           
-          "--------------------------------------------------------------------------------------------", br(),
+          "-----", br(),
           
           "The sample data includes five healthy young participants walking data. They were asked to perform level walking on 
           a 15-m straight walkway for a couple times (trial 1- trial 5). A 12-camera motion analysis system with 
           a set of 40 reflective markers was used to record the whole body movement during walking. From the marker 
           trajectories, 3-D human model was created and joint data was then calculated for further analysis.", br(),
           
-          "--------------------------------------------------------------------------------------------", br(),
+          "-----", br(),
           
           "You can choose to demonstrate different participants' walking data."  
           )))
