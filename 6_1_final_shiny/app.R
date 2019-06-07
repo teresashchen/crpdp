@@ -228,7 +228,30 @@ ui <- fluidPage(
                            "Participant7" = "7")),
             
  hr(),
- helpText("The main purpose of the project is to calculate two outcome variables indicating human joint-joint coordination and variability of coordination during body movement. These two variables ared called inter-joint continuous relative phase (CRP) and deviation phase (DP), respectively.")
+
+ helpText(HTML(paste("The main purpose of the project is to calculate two outcome variables indicating 
+          human joint-joint coordination and variability of coordination during body movement. 
+          These two variables ared called inter-joint continuous relative phase (CRP) and deviation phase (DP), 
+          respectively.", br(), 
+          
+          "--------------------------------------------------------------------------------------------", br(),
+         
+          "We designed This shiny app 1) to demonstrate the profile of inter-joint coordination as well as  
+          the steps leading to CRP and DP and 2) to aid in effectiveness during debugging process by visualizing 
+          each calculation step.", br(), 
+          
+          "--------------------------------------------------------------------------------------------", br(),
+          
+          "The sample data includes five healthy young participants walking data. They were asked to perform level walking on 
+          a 15-m straight walkway for a couple times (trial 1- trial 5). A 12-camera motion analysis system with 
+          a set of 40 reflective markers was used to record the whole body movement during walking. From the marker 
+          trajectories, 3-D human model was created and joint data was then calculated for further analysis.", br(),
+          
+          "--------------------------------------------------------------------------------------------", br(),
+          
+          "You can choose to demonstrate different participants' walking data."  
+          )))
+ 
  ),
         
     # Main panel for displaying outputs ----
@@ -236,10 +259,14 @@ ui <- fluidPage(
         
     # Output: Tabset w/ different movements ----
         tabsetPanel(type = "tabs",
+            # tablPanel("Equations", uiOutput("tab")),
+            
             tabPanel("Phase Portrait", plotOutput("phase_portrait")), #phase_portrait
             tabPanel("Phase Angle Plot", plotOutput("phase_angle_plot")), #phase_angle_plot
             tabPanel("CRP Hip-Knee Plot", plotOutput("crp_hipknee_plot")), #crp_hipknee_plot
             tabPanel("CRP Knee-Ankle Plot", plotOutput("crp_kneeankle_plot")) #crp_kneeankle_plot 
+            # tabPanel("Equtions",a("Please refer to this link for detail information regarding equations for each step", 
+            #                       href="http://google.com", target="_blank"))
             ),
     dataTableOutput("tbl")
         )
@@ -265,6 +292,8 @@ server <- function(input, output) {
         # id(input$id)
     })
     
+
+
     # Generate a plot of phase_portrait ----
     # Also uses the inputs to build the plot label. Note that the
     # dependencies on the inputs and the data reactive expression are

@@ -1,0 +1,58 @@
+---
+title: 'cprdp: Equations'
+author: "Teresa Chen"
+date: "6/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## How to calculate Continuous Relative Phase and Deviation Phase? {.tabset}
+
+
+The purpose of this R project is to calculate 1) continuous relative phase (CRP) from angles and angular velocities of each joint as well as 2) the standard deviations of the CRP curve points (deviation phase, DP).  
+
+Each tab below shows steps leading to CRP and DP.
+
+**References**
+
+Bilateral knee osteoarthritis does not affect inter-joint coordination in older adults with gait deviations during obstacle-crossing https://www.sciencedirect.com/science/article/pii/S0021929009003613#bib6
+
+
+### Step 1. Built phase portrait
+
+Phase portrait is to plot the normalized angular positions $\Theta$ (x-axis) and normalized angular velocities $\omega_{i}$ (y-axis). Angular positions and velocities were normalized using the following equations, where $\Theta_{i}$ and $\omega_{i}$ are the angular position and velocity for 101 data points during a walking cycle.  
+  
+  $$\Theta_{i}=\frac{2*[\Theta_{i}-min(\Theta_{i})]}{max(\Theta_{i})-min(\Theta_{i})}-1$$
+  
+### Step 2. Calculate phase angle
+
+Phase angle($\varphi$) is calculated using the below equation along each data point and unwrapped to correct discontinuities occurred during angle computation.  
+
+
+ $$\varphi = \tan^{-1}(\frac{\omega}{\theta }) $$
+ 
+ 
+### Step 3.1 Hip-knee CRP
+
+CRP is obtained by subtracting the phase angles of distal joint from that of proximal joint as follows. CRP identifies the coordination between two adjacent joints.
+  
+  $$CRP_{hip\cdot knee}=\varphi_{hip} - \varphi_{knee}$$
+  
+### Step 3.2. Knee-ankle CRP
+
+Similarly, knee-ankle CRP is obtained using the following eqution: 
+
+ $$CRP_{knee\cdot ankle}=\varphi_{knee} - \varphi_{ankle}$$
+ 
+
+### Step 4. DP
+
+DP is the average value of all standard deviations calculated for each data point over a walking cycle from upto five CRP curves as follows.  
+
+$$mean(std(CRP_{i}))$$  
+
+
+
